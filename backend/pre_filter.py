@@ -22,9 +22,9 @@ def pre_screen_job(title: str, description: str, settings: dict) -> tuple[bool, 
         kw_clean = kw.strip().lower()
         if not kw_clean:
             continue
-        # Use regex search for word boundaries where possible (e.g. for "PM")
-        # to avoid matching "Development" as containing "PM"
-        if len(kw_clean) <= 2:
+        # Use regex search for word boundaries where possible (e.g. for English "PM")
+        # to avoid matching "Development" as containing "PM", but do substring matching for Hebrew/Unicode.
+        if len(kw_clean) <= 2 and kw_clean.isalnum() and kw_clean.isascii():
             pattern = re.compile(rf"\b{re.escape(kw_clean)}\b")
             if pattern.search(title_lower) or pattern.search(desc_lower):
                 has_must_have = True
