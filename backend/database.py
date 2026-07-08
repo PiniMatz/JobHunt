@@ -38,6 +38,7 @@ def init_db():
         data_score INTEGER NOT NULL,
         pm_score INTEGER NOT NULL,
         fit_score INTEGER NOT NULL,
+        explanation TEXT,
         pros TEXT,      -- JSON list
         cons TEXT,      -- JSON list
         red_flags TEXT, -- JSON list
@@ -60,6 +61,11 @@ def init_db():
     """)
     
     # Run migrations for existing DBs
+    try:
+        cursor.execute("ALTER TABLE matches ADD COLUMN explanation TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+        
     try:
         cursor.execute("ALTER TABLE settings ADD COLUMN must_have_keywords TEXT DEFAULT '[\"Product Manager\", \"Product Owner\", \"PM\"]'")
     except sqlite3.OperationalError:
@@ -169,7 +175,7 @@ def delete_job(job_id):
     conn.commit()
     conn.close()
 
-def save_match_result(job_id, overall_score, tech_score, data_score, pm_score, fit_score, pros, cons, red_flags):
+def save_match_result(job_id, overall_score, tech_score, data_score, pm_score, fit_score, pros, cons, red_flags, explanation=""):
     conn = get_db_connection()
     cursor = conn.cursor()
     
@@ -185,16 +191,16 @@ def save_match_result(job_id, overall_score, tech_score, data_score, pm_score, f
         cursor.execute(
             """UPDATE matches SET 
                overall_score = ?, tech_score = ?, data_score = ?, pm_score = ?, fit_score = ?, 
-               pros = ?, cons = ?, red_flags = ?, created_at = CURRENT_TIMESTAMP
+               explanation = ?, pros = ?, cons = ?, red_flags = ?, created_at = CURRENT_TIMESTAMP
                WHERE job_id = ?""",
-            (overall_score, tech_score, data_score, pm_score, fit_score, pros_json, cons_json, red_flags_json, job_id)
+            (overall_score, tech_score, data_score, pm_score, fit_score, explanation, pros_json, cons_json, red_flags_json, job_id)
         )
     else:
         cursor.execute(
             """INSERT INTO matches 
-               (job_id, overall_score, tech_score, data_score, pm_score, fit_score, pros, cons, red_flags) 
-               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)""",
-            (job_id, overall_score, tech_score, data_score, pm_score, fit_score, pros_json, cons_json, red_flags_json)
+               (job_id, overall_score, tech_score, data_score, pm_score, fit_score, explanation, pros, cons, red_flags) 
+               VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (job_id, overall_score, tech_score, data_score, pm_score, fit_score, explanation, pros_json, cons_json, red_flags_json)
         )
     conn.commit()
     conn.close()
@@ -205,10 +211,10 @@ def get_jobs_with_matches():
     cursor.execute("""
         SELECT j.id, j.title, j.company, j.location, j.description, j.url, j.status, j.date_found,
                m.overall_score, m.tech_score, m.data_score, m.pm_score, m.fit_score,
-               m.pros, m.cons, m.red_flags
-        FROM jobs j
-        LEFT JOIN matches m ON j.id = m.job_id
-        ORDER BY j.date_found DESC
+               m.explanation, m.pros, m.cons, m.red_flags
+         FROM jobs j
+         LEFT JOIN matches m ON j.id = m.job_id
+         ORDER BY j.date_found DESC
     """)
     rows = cursor.fetchall()
     conn.close()
@@ -233,6 +239,7 @@ def get_jobs_with_matches():
                 "data_score": r["data_score"],
                 "pm_score": r["pm_score"],
                 "fit_score": r["fit_score"],
+                "explanation": r["explanation"] if r["explanation"] else "",
                 "pros": json.loads(r["pros"]) if r["pros"] else [],
                 "cons": json.loads(r["cons"]) if r["cons"] else [],
                 "red_flags": json.loads(r["red_flags"]) if r["red_flags"] else []

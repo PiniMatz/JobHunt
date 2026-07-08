@@ -113,7 +113,8 @@ def match_job(job_id: int):
                 fit_score=match_analysis["fit_score"],
                 pros=match_analysis["pros"],
                 cons=match_analysis["cons"],
-                red_flags=match_analysis["red_flags"]
+                red_flags=match_analysis["red_flags"],
+                explanation=match_analysis.get("explanation", "")
             )
         else:
             # Skip LLM call entirely
@@ -126,7 +127,8 @@ def match_job(job_id: int):
                 fit_score=0,
                 pros=[],
                 cons=[f"Local Pre-screen: {reason}"],
-                red_flags=["Screened out locally to save API cost."]
+                red_flags=["Screened out locally to save API cost."],
+                explanation=f"Pre-screening failed: {reason}"
             )
             
         # Return the updated job with match info
