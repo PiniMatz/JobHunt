@@ -272,5 +272,63 @@ def search_live_jobs(target_locations: list, query: str = "Product Manager") -> 
     except Exception as e:
         print(f"Error executing GotFriends scraper flow: {e}")
 
+    # 4. Scrape Secret Tel Aviv
+    try:
+        secrettelaviv_jobs = scrape_secrettelaviv(target_locations)
+        jobs.extend(secrettelaviv_jobs)
+    except Exception as e:
+        print(f"Error executing Secret Tel Aviv scraper flow: {e}")
+
     print(f"Combined scraper: parsed {len(jobs)} matching jobs in total.")
+    return jobs
+
+def scrape_secrettelaviv(target_locations: list) -> list:
+    """Scrape Secret Tel Aviv Jobs for active Product Manager listings."""
+    jobs = []
+    url = "https://jobs.secrettelaviv.com/?s=product+manager"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+    }
+    print(f"Scraping Secret Tel Aviv listings: {url}")
+    try:
+        r = requests.get(url, headers=headers, timeout=8)
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            job_items = soup.find_all(class_=re.compile(r"post-\d+"))
+            print(f"Found {len(job_items)} raw job elements on Secret Tel Aviv.")
+            
+            for item in job_items:
+                # Title
+                title_el = item.find(class_="post-title")
+                if not title_el:
+                    continue
+                title = title_el.text.strip()
+                
+                # Link
+                link_el = title_el.find("a")
+                job_url = link_el["href"] if link_el else ""
+                
+                # Description
+                desc_el = item.find(class_="post-content")
+                description = desc_el.text.strip() if desc_el else ""
+                
+                # Location (Since it is Secret Tel Aviv, default to Tel Aviv)
+                location = "Tel Aviv"
+                
+                # Company (default to Secret Tel Aviv Client)
+                company = "Secret Tel Aviv Client"
+                
+                # Filter by location (translation-aware check)
+                if title and match_location(location, target_locations):
+                    jobs.append({
+                        "title": title,
+                        "company": company,
+                        "location": location,
+                        "url": job_url,
+                        "description": description,
+                        "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+            print(f"Secret Tel Aviv: matched {len(jobs)} jobs.")
+    except Exception as e:
+        print(f"Error scraping Secret Tel Aviv: {e}")
     return jobs
