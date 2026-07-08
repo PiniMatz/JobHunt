@@ -19,6 +19,17 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
     return 'var(--score-low)';
   };
 
+  const getJobSource = (url) => {
+    if (!url) return 'Direct Source';
+    const lowercaseUrl = url.toLowerCase();
+    if (lowercaseUrl.includes('drushim.co.il')) return 'Drushim';
+    if (lowercaseUrl.includes('jobmaster.co.il')) return 'JobMaster';
+    if (lowercaseUrl.includes('gotfriends.co.il')) return 'GotFriends';
+    if (lowercaseUrl.includes('secrettelaviv.com')) return 'Secret Tel Aviv';
+    if (lowercaseUrl.includes('goozali.com')) return 'Goozali';
+    return 'Web Listing';
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'starred': return '⭐';
@@ -87,6 +98,19 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
+            <span style={{ 
+              fontSize: '0.75rem', 
+              backgroundColor: 'rgba(139, 92, 246, 0.1)', 
+              border: '1px solid rgba(139, 92, 246, 0.2)', 
+              padding: '0.15rem 0.5rem', 
+              borderRadius: '4px', 
+              color: 'var(--accent-purple)', 
+              fontWeight: 'bold',
+              textTransform: 'uppercase',
+              letterSpacing: '0.5px'
+            }}>
+              {getJobSource(job.url)}
+            </span>
             <span style={{ fontSize: '0.9rem', backgroundColor: 'var(--bg-tertiary)', padding: '0.15rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
               {job.company}
             </span>
