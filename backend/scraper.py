@@ -6,112 +6,7 @@ import requests
 from bs4 import BeautifulSoup
 from database import get_settings
 
-MOCK_JOBS = [
-    {
-        "title": "Technical Product Manager - Cloud Infrastructure",
-        "company": "CyShield Technologies",
-        "location": "Netanya",
-        "url": "https://example.com/jobs/cyshield-tech-pm",
-        "description": (
-            "We are seeking a Technical Product Manager to lead our Cloud Infrastructure team. "
-            "You will own the roadmap for our core platform, APIs, and cloud services (AWS/GCP). "
-            "Requirements:\n"
-            "- 3+ years of experience as a Product Manager in a technical domain.\n"
-            "- Strong engineering background (former software engineer or DevOps highly preferred).\n"
-            "- Deep understanding of microservices architecture, Docker, Kubernetes, and API design.\n"
-            "- Excellent communication skills and experience writing technical specifications."
-        )
-    },
-    {
-        "title": "Senior Data Product Manager - Analytics Platform",
-        "company": "ShopSmart Global",
-        "location": "Netanya",
-        "url": "https://example.com/jobs/shopsmart-senior-data-pm",
-        "description": (
-            "As a Senior Data Product Manager, you will define the vision and strategy for our enterprise "
-            "data platform. You will work closely with Data Engineers, Data Scientists, and BI analysts to "
-            "build robust data pipelines, analytics products, and ML-driven features.\n"
-            "Requirements:\n"
-            "- 5+ years of PM experience with a proven track record of shipping data products.\n"
-            "- Strong SQL skills and experience with Snowflake, BigQuery, or Redshift.\n"
-            "- Experience building ET/ELT pipelines, data lakes, and data warehouses.\n"
-            "- Understanding of machine learning models and predictive analytics."
-        )
-    },
-    {
-        "title": "Product Manager - AI & Advanced Analytics",
-        "company": "DriveVision",
-        "location": "Netanya",
-        "url": "https://example.com/jobs/drivevision-ai-pm",
-        "description": (
-            "DriveVision is a pioneer in autonomous driving technology. We are looking for an AI PM "
-            "to lead our perception data platform. You will guide the development of data pipelines "
-            "that process terabytes of sensor data and train computer vision models.\n"
-            "Requirements:\n"
-            "- Experience in AI, machine learning, or deep learning product management.\n"
-            "- Deep understanding of computer vision or large-scale data ingestion.\n"
-            "- Technical background in CS, Engineering, or Mathematics.\n"
-            "- Hands-on attitude and familiarity with Python/SQL."
-        )
-    },
-    {
-        "title": "Product Manager - Growth & Conversion",
-        "company": "PlayApex Studios",
-        "location": "Netanya",
-        "url": "https://example.com/jobs/playapex-growth-pm",
-        "description": (
-            "We are looking for a Growth Product Manager to optimize our user acquisition and monetization "
-            "funnels. You will run A/B tests, analyze user behavior, and coordinate closely with marketing "
-            "and UI/UX designers to increase retention and revenue.\n"
-            "Requirements:\n"
-            "- 2+ years of PM experience in mobile gaming or B2C SaaS.\n"
-            "- Strong analytic mindset (Mixpanel, Amplitude, GA).\n"
-            "- Experience with rapid experimentation and product-led growth strategies.\n"
-            "- High empathy and passion for user experience design."
-        )
-    },
-    {
-        "title": "Technical Product Manager - Data & Integrations",
-        "company": "FinFlow Solutions",
-        "location": "Tel Aviv",  # Outside Netanya to test location filter
-        "url": "https://example.com/jobs/finflow-data-pm",
-        "description": (
-            "FinFlow is building the next generation of financial integrations. We are looking for a Technical "
-            "Product Manager to own our third-party API integrations and core data pipeline reliability.\n"
-            "Requirements:\n"
-            "- Experience managing API products, webhooks, and integrations.\n"
-            "- Background in fintech or payment processing preferred.\n"
-            "- Solid technical skills: reading API code, understanding databases, querying with SQL."
-        )
-    },
-    {
-        "title": "Director of Product - Platform & Security",
-        "company": "SecureGrid",
-        "location": "Netanya",
-        "url": "https://example.com/jobs/securegrid-director",
-        "description": (
-            "Lead the product organization for SecureGrid's developer platforms. You will manage a team of PMs "
-            "focusing on security protocols, network architectures, and global scaling.\n"
-            "Requirements:\n"
-            "- 8+ years of product management leadership.\n"
-            "- Strong expertise in Cybersecurity, SaaS, and Enterprise infrastructure.\n"
-            "- Excellent business acumen and stakeholder communication."
-        )
-    }
-]
-
-def fetch_mock_jobs(target_locations: list) -> list:
-    """Generate mock jobs matching the target locations."""
-    matched_jobs = []
-    for job in MOCK_JOBS:
-        # Check if the job's location is in our target list (case-insensitive)
-        if any(loc.lower() in job["location"].lower() for loc in target_locations):
-            # Create a copy and add a slightly random date found
-            job_copy = job.copy()
-            days_ago = random.randint(0, 3)
-            job_copy["date_found"] = (datetime.now() - timedelta(days=days_ago)).strftime("%Y-%m-%d %H:%M:%S")
-            matched_jobs.append(job_copy)
-    return matched_jobs
+# Mock jobs data removed to enforce 100% real crawling only.
 
 LOCATION_TRANSLATIONS = {
     "netanya": ["netanya", "natanya", "נתניה"],
@@ -292,8 +187,8 @@ def search_live_jobs(target_locations: list, query: str = "Product Manager") -> 
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
     
-    # 1. Scrape Drushim (Pages 1 to 3)
-    for page in range(1, 4):
+    # 1. Scrape Drushim (Pages 1 to 10)
+    for page in range(1, 11):
         if page == 1:
             search_url = "https://www.drushim.co.il/jobs/search/product%20manager/"
         else:
@@ -378,11 +273,4 @@ def search_live_jobs(target_locations: list, query: str = "Product Manager") -> 
         print(f"Error executing GotFriends scraper flow: {e}")
 
     print(f"Combined scraper: parsed {len(jobs)} matching jobs in total.")
-
-    # 4. Fallback / Mock combination
-    # If no live jobs matched, fall back to mock jobs so the user always has demo data to verify
-    if not jobs:
-        print("No live jobs matched target locations. Loading mock listings...")
-        jobs = fetch_mock_jobs(target_locations)
-        
     return jobs
