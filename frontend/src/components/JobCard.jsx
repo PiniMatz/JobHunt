@@ -87,12 +87,12 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.25rem' }}>
-            <span style={{ fontSize: '0.8rem', backgroundColor: 'var(--bg-tertiary)', padding: '0.15rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
+            <span style={{ fontSize: '0.9rem', backgroundColor: 'var(--bg-tertiary)', padding: '0.15rem 0.5rem', borderRadius: '4px', color: 'var(--text-secondary)' }}>
               {job.company}
             </span>
-            <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>📍 {job.location}</span>
+            <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>📍 {job.location}</span>
           </div>
-          <h3 style={{ fontSize: '1.15rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+          <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
             {job.title}
           </h3>
         </div>
@@ -108,10 +108,10 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
             border: '1px solid rgba(255,255,255,0.05)',
             minWidth: '70px'
           }}>
-            <span style={{ fontSize: '1.5rem', fontWeight: 'bold', color: getScoreColor(overallScore) }}>
+            <span style={{ fontSize: '1.75rem', fontWeight: 'bold', color: getScoreColor(overallScore) }}>
               {overallScore}%
             </span>
-            <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Match</span>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Match</span>
           </div>
         ) : (
           <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
@@ -147,7 +147,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
 
       {/* Breakdown Scores */}
       {match && (
-        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.75rem', fontSize: '0.75rem' }}>
+        <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap', marginTop: '0.75rem', fontSize: '0.85rem' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
             <span style={{ color: 'var(--text-secondary)' }}>Tech:</span>
             <strong style={{ color: getScoreColor(match.tech_score) }}>{match.tech_score}</strong>
@@ -181,7 +181,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
               backgroundColor: job.status === 'starred' ? 'rgba(245, 158, 11, 0.15)' : 'var(--bg-tertiary)',
               color: job.status === 'starred' ? 'var(--score-medium)' : 'var(--text-secondary)',
               cursor: 'pointer',
-              fontSize: '0.8rem',
+              fontSize: '0.9rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem'
@@ -199,7 +199,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
               backgroundColor: job.status === 'applied' ? 'rgba(16, 185, 129, 0.15)' : 'var(--bg-tertiary)',
               color: job.status === 'applied' ? 'var(--score-high)' : 'var(--text-secondary)',
               cursor: 'pointer',
-              fontSize: '0.8rem',
+              fontSize: '0.9rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.25rem'
@@ -224,7 +224,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
                 backgroundColor: 'transparent',
                 color: 'var(--accent-purple)',
                 textDecoration: 'none',
-                fontSize: '0.8rem',
+                fontSize: '0.9rem',
                 display: 'flex',
                 alignItems: 'center'
               }}
@@ -240,7 +240,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
               backgroundColor: 'rgba(239, 68, 68, 0.1)',
               color: 'var(--score-low)',
               cursor: 'pointer',
-              fontSize: '0.8rem'
+              fontSize: '0.9rem'
             }}
             onClick={() => onStatusChange(job.id, 'dismissed')}
           >
@@ -256,7 +256,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
             marginTop: '1rem', 
             paddingTop: '1rem', 
             borderTop: '1px solid rgba(255,255,255,0.05)',
-            fontSize: '0.9rem',
+            fontSize: '1.0rem',
             animation: 'fadeIn 0.2s ease'
           }}
           onClick={(e) => e.stopPropagation()}
@@ -264,35 +264,35 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
           {/* Analysis breakdown */}
           {match && (
             <div style={{ marginBottom: '1.25rem' }}>
-              <h4 style={{ color: 'var(--accent-purple)', fontSize: '0.95rem', marginBottom: '0.5rem' }}>💡 AI Matching Analysis</h4>
-              <p style={{ color: 'var(--text-primary)', fontStyle: 'italic', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              <h4 style={{ color: 'var(--accent-purple)', fontSize: '1.05rem', marginBottom: '0.5rem' }}>💡 AI Matching Analysis</h4>
+              <p style={{ color: 'var(--text-primary)', fontStyle: 'italic', marginBottom: '1rem', fontSize: '0.95rem' }}>
                 &ldquo;{match.explanation || 'No summary available.'}&rdquo;
               </p>
               
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem', marginBottom: '1rem' }}>
                 <div style={{ backgroundColor: 'rgba(16, 185, 129, 0.04)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(16, 185, 129, 0.1)' }}>
-                  <strong style={{ color: 'var(--score-high)', fontSize: '0.8rem', display: 'block', marginBottom: '0.25rem' }}>PROS</strong>
+                  <strong style={{ color: 'var(--score-high)', fontSize: '0.9rem', display: 'block', marginBottom: '0.25rem' }}>PROS</strong>
                   {match.pros && match.pros.length > 0 ? (
-                    <ul style={{ paddingLeft: '1rem', margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <ul style={{ paddingLeft: '1rem', margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                       {match.pros.map((pro, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{pro}</li>)}
                     </ul>
-                  ) : <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>None listed</span>}
+                  ) : <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>None listed</span>}
                 </div>
                 
                 <div style={{ backgroundColor: 'rgba(239, 68, 68, 0.04)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(239, 68, 68, 0.1)' }}>
-                  <strong style={{ color: 'var(--score-low)', fontSize: '0.8rem', display: 'block', marginBottom: '0.25rem' }}>CONS / RISK AREAS</strong>
+                  <strong style={{ color: 'var(--score-low)', fontSize: '0.9rem', display: 'block', marginBottom: '0.25rem' }}>CONS / RISK AREAS</strong>
                   {match.cons && match.cons.length > 0 ? (
-                    <ul style={{ paddingLeft: '1rem', margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                    <ul style={{ paddingLeft: '1rem', margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                       {match.cons.map((con, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{con}</li>)}
                     </ul>
-                  ) : <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>None listed</span>}
+                  ) : <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>None listed</span>}
                 </div>
               </div>
 
               {match.red_flags && match.red_flags.length > 0 && (
                 <div style={{ backgroundColor: 'rgba(245, 158, 11, 0.06)', padding: '0.75rem', borderRadius: '6px', border: '1px solid rgba(245, 158, 11, 0.15)', marginBottom: '1rem' }}>
-                  <strong style={{ color: 'var(--score-medium)', fontSize: '0.8rem', display: 'block', marginBottom: '0.25rem' }}>⚠️ RED FLAGS / RISKS</strong>
-                  <ul style={{ paddingLeft: '1rem', margin: 0, fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+                  <strong style={{ color: 'var(--score-medium)', fontSize: '0.9rem', display: 'block', marginBottom: '0.25rem' }}>⚠️ RED FLAGS / RISKS</strong>
+                  <ul style={{ paddingLeft: '1rem', margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
                     {match.red_flags.map((flag, i) => <li key={i} style={{ marginBottom: '0.25rem' }}>{flag}</li>)}
                   </ul>
                 </div>
@@ -302,13 +302,13 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
 
           {/* Job Description */}
           <div style={{ marginBottom: '1.25rem' }}>
-            <h4 style={{ color: 'var(--accent-blue)', fontSize: '0.95rem', marginBottom: '0.5rem' }}>📋 Job Description</h4>
+            <h4 style={{ color: 'var(--accent-blue)', fontSize: '1.05rem', marginBottom: '0.5rem' }}>📋 Job Description</h4>
             <div style={{ 
               backgroundColor: 'rgba(0,0,0,0.15)', 
               padding: '0.75rem', 
               borderRadius: '6px', 
               color: 'var(--text-secondary)',
-              fontSize: '0.8rem',
+              fontSize: '0.9rem',
               whiteSpace: 'pre-wrap',
               maxHeight: '200px',
               overflowY: 'auto'
@@ -320,7 +320,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
           {/* On-Demand CV Suggestions */}
           <div style={{ borderTop: '1px dashed rgba(255,255,255,0.08)', paddingTop: '1rem' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <h4 style={{ color: 'var(--text-primary)', fontSize: '0.95rem' }}>💡 Tailor My CV (On-Demand Suggestions)</h4>
+              <h4 style={{ color: 'var(--text-primary)', fontSize: '1.05rem' }}>💡 Tailor My CV (On-Demand Suggestions)</h4>
               {!suggestions && (
                 <button 
                   onClick={handleFetchSuggestions}
@@ -332,7 +332,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
                     backgroundColor: 'var(--accent-purple)',
                     color: 'white',
                     cursor: 'pointer',
-                    fontSize: '0.75rem',
+                    fontSize: '0.85rem',
                     fontWeight: 'bold',
                     display: 'flex',
                     alignItems: 'center',
@@ -345,28 +345,28 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
             </div>
 
             {loadingSuggestions && (
-              <div style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', padding: '0.5rem', fontStyle: 'italic' }}>
+              <div style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', padding: '0.5rem', fontStyle: 'italic' }}>
                 Comparing CV bullet points against job requirements to formulate suggestions...
               </div>
             )}
 
             {errorSuggestions && (
-              <div style={{ color: 'var(--score-low)', fontSize: '0.8rem', padding: '0.5rem', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: '4px' }}>
+              <div style={{ color: 'var(--score-low)', fontSize: '0.9rem', padding: '0.5rem', backgroundColor: 'rgba(239, 68, 68, 0.05)', borderRadius: '4px' }}>
                 Failed to generate suggestions: {errorSuggestions}
               </div>
             )}
 
             {suggestions && (
-              <div style={{ backgroundColor: 'rgba(139, 92, 246, 0.03)', border: '1px solid rgba(139, 92, 246, 0.1)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.85rem' }}>
-                <p style={{ color: 'var(--text-primary)', marginBottom: '0.75rem', fontStyle: 'italic', fontSize: '0.8rem' }}>
+              <div style={{ backgroundColor: 'rgba(139, 92, 246, 0.03)', border: '1px solid rgba(139, 92, 246, 0.1)', borderRadius: '8px', padding: '0.75rem', fontSize: '0.95rem' }}>
+                <p style={{ color: 'var(--text-primary)', marginBottom: '0.75rem', fontStyle: 'italic', fontSize: '0.9rem' }}>
                   &ldquo;{suggestions.general_feedback}&rdquo;
                 </p>
                 
                 {suggestions.suggested_phrasings && suggestions.suggested_phrasings.length > 0 && (
                   <div style={{ marginBottom: '0.75rem' }}>
-                    <strong style={{ color: 'var(--accent-purple)', fontSize: '0.8rem', display: 'block', marginBottom: '0.5rem' }}>SUGGESTED REPHRASINGS:</strong>
+                    <strong style={{ color: 'var(--accent-purple)', fontSize: '0.9rem', display: 'block', marginBottom: '0.5rem' }}>SUGGESTED REPHRASINGS:</strong>
                     {suggestions.suggested_phrasings.map((phrase, i) => (
-                      <div key={i} style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '0.5rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.75rem' }}>
+                      <div key={i} style={{ backgroundColor: 'rgba(0,0,0,0.1)', padding: '0.5rem', borderRadius: '4px', marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                         <span style={{ fontWeight: 'bold', color: 'var(--text-primary)', display: 'block', marginBottom: '0.25rem' }}>Section: {phrase.section}</span>
                         <div style={{ color: 'var(--score-low)', textDecoration: 'line-through', marginBottom: '0.15rem' }}>From: {phrase.original_text}</div>
                         <div style={{ color: 'var(--score-high)', fontWeight: '500', marginBottom: '0.25rem' }}>To: {phrase.suggested_text}</div>
@@ -379,10 +379,10 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
                 <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.75rem' }}>
                   {suggestions.skills_to_highlight && suggestions.skills_to_highlight.length > 0 && (
                     <div>
-                      <strong style={{ color: 'var(--accent-blue)', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>ELEVATE THESE SKILLS:</strong>
+                      <strong style={{ color: 'var(--accent-blue)', fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>ELEVATE THESE SKILLS:</strong>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                         {suggestions.skills_to_highlight.map((skill, i) => (
-                          <span key={i} style={{ fontSize: '0.7rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                          <span key={i} style={{ fontSize: '0.8rem', backgroundColor: 'rgba(59, 130, 246, 0.1)', color: 'var(--accent-blue)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
                             {skill}
                           </span>
                         ))}
@@ -392,10 +392,10 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
 
                   {suggestions.skills_to_acquire_or_mention && suggestions.skills_to_acquire_or_mention.length > 0 && (
                     <div>
-                      <strong style={{ color: 'var(--score-medium)', fontSize: '0.75rem', display: 'block', marginBottom: '0.25rem' }}>MENTION IN INTERVIEW:</strong>
+                      <strong style={{ color: 'var(--score-medium)', fontSize: '0.85rem', display: 'block', marginBottom: '0.25rem' }}>MENTION IN INTERVIEW:</strong>
                       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.25rem' }}>
                         {suggestions.skills_to_acquire_or_mention.map((skill, i) => (
-                          <span key={i} style={{ fontSize: '0.7rem', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: 'var(--score-medium)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
+                          <span key={i} style={{ fontSize: '0.8rem', backgroundColor: 'rgba(245, 158, 11, 0.1)', color: 'var(--score-medium)', padding: '0.15rem 0.4rem', borderRadius: '4px' }}>
                             {skill}
                           </span>
                         ))}
