@@ -114,7 +114,7 @@ def scrape_jobmaster(target_locations: list) -> list:
                         "description": description,
                         "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                     })
-            print(f"JobMaster: matched {len(jobs)} jobs for locations {target_locations}")
+            print(f"JobMaster: matched {len(jobs)} jobs.")
     except Exception as e:
         print(f"Error scraping JobMaster: {e}")
     return jobs
@@ -170,7 +170,7 @@ def scrape_gotfriends(target_locations: list) -> list:
                             "description": description,
                             "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
                         })
-                print(f"GotFriends: matched {len(jobs)} jobs for locations {target_locations}")
+                print(f"GotFriends: matched {len(jobs)} jobs.")
     except Exception as e:
         print(f"Error scraping GotFriends: {e}")
     return jobs
@@ -240,7 +240,7 @@ def search_live_jobs(target_locations: list, query: str = "Product Manager") -> 
                         
                         # Fetch full description from the direct page (to run detailed LLM match)
                         if url:
-                            print(f"Drushim match: {location}. Fetching full details for '{title}'...")
+                            print("Drushim match found. Fetching full details...")
                             full_desc = scrape_full_job_description(url, headers)
                             if full_desc:
                                 description = full_desc
