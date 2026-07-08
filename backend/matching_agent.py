@@ -99,7 +99,7 @@ def analyze_job_match(cv_markdown: str, job_title: str, job_description: str, ap
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         prompt = (
             "You are a highly sophisticated Product Management recruitment agent. Your task is to analyze "
