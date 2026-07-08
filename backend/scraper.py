@@ -1,0 +1,251 @@
+import os
+import json
+import random
+from datetime import datetime, timedelta
+import requests
+from bs4 import BeautifulSoup
+from database import get_settings
+
+MOCK_JOBS = [
+    {
+        "title": "Technical Product Manager - Cloud Infrastructure",
+        "company": "CyShield Technologies",
+        "location": "Netanya",
+        "url": "https://example.com/jobs/cyshield-tech-pm",
+        "description": (
+            "We are seeking a Technical Product Manager to lead our Cloud Infrastructure team. "
+            "You will own the roadmap for our core platform, APIs, and cloud services (AWS/GCP). "
+            "Requirements:\n"
+            "- 3+ years of experience as a Product Manager in a technical domain.\n"
+            "- Strong engineering background (former software engineer or DevOps highly preferred).\n"
+            "- Deep understanding of microservices architecture, Docker, Kubernetes, and API design.\n"
+            "- Excellent communication skills and experience writing technical specifications."
+        )
+    },
+    {
+        "title": "Senior Data Product Manager - Analytics Platform",
+        "company": "ShopSmart Global",
+        "location": "Netanya",
+        "url": "https://example.com/jobs/shopsmart-senior-data-pm",
+        "description": (
+            "As a Senior Data Product Manager, you will define the vision and strategy for our enterprise "
+            "data platform. You will work closely with Data Engineers, Data Scientists, and BI analysts to "
+            "build robust data pipelines, analytics products, and ML-driven features.\n"
+            "Requirements:\n"
+            "- 5+ years of PM experience with a proven track record of shipping data products.\n"
+            "- Strong SQL skills and experience with Snowflake, BigQuery, or Redshift.\n"
+            "- Experience building ET/ELT pipelines, data lakes, and data warehouses.\n"
+            "- Understanding of machine learning models and predictive analytics."
+        )
+    },
+    {
+        "title": "Product Manager - AI & Advanced Analytics",
+        "company": "DriveVision",
+        "location": "Netanya",
+        "url": "https://example.com/jobs/drivevision-ai-pm",
+        "description": (
+            "DriveVision is a pioneer in autonomous driving technology. We are looking for an AI PM "
+            "to lead our perception data platform. You will guide the development of data pipelines "
+            "that process terabytes of sensor data and train computer vision models.\n"
+            "Requirements:\n"
+            "- Experience in AI, machine learning, or deep learning product management.\n"
+            "- Deep understanding of computer vision or large-scale data ingestion.\n"
+            "- Technical background in CS, Engineering, or Mathematics.\n"
+            "- Hands-on attitude and familiarity with Python/SQL."
+        )
+    },
+    {
+        "title": "Product Manager - Growth & Conversion",
+        "company": "PlayApex Studios",
+        "location": "Netanya",
+        "url": "https://example.com/jobs/playapex-growth-pm",
+        "description": (
+            "We are looking for a Growth Product Manager to optimize our user acquisition and monetization "
+            "funnels. You will run A/B tests, analyze user behavior, and coordinate closely with marketing "
+            "and UI/UX designers to increase retention and revenue.\n"
+            "Requirements:\n"
+            "- 2+ years of PM experience in mobile gaming or B2C SaaS.\n"
+            "- Strong analytic mindset (Mixpanel, Amplitude, GA).\n"
+            "- Experience with rapid experimentation and product-led growth strategies.\n"
+            "- High empathy and passion for user experience design."
+        )
+    },
+    {
+        "title": "Technical Product Manager - Data & Integrations",
+        "company": "FinFlow Solutions",
+        "location": "Tel Aviv",  # Outside Netanya to test location filter
+        "url": "https://example.com/jobs/finflow-data-pm",
+        "description": (
+            "FinFlow is building the next generation of financial integrations. We are looking for a Technical "
+            "Product Manager to own our third-party API integrations and core data pipeline reliability.\n"
+            "Requirements:\n"
+            "- Experience managing API products, webhooks, and integrations.\n"
+            "- Background in fintech or payment processing preferred.\n"
+            "- Solid technical skills: reading API code, understanding databases, querying with SQL."
+        )
+    },
+    {
+        "title": "Director of Product - Platform & Security",
+        "company": "SecureGrid",
+        "location": "Netanya",
+        "url": "https://example.com/jobs/securegrid-director",
+        "description": (
+            "Lead the product organization for SecureGrid's developer platforms. You will manage a team of PMs "
+            "focusing on security protocols, network architectures, and global scaling.\n"
+            "Requirements:\n"
+            "- 8+ years of product management leadership.\n"
+            "- Strong expertise in Cybersecurity, SaaS, and Enterprise infrastructure.\n"
+            "- Excellent business acumen and stakeholder communication."
+        )
+    }
+]
+
+def fetch_mock_jobs(target_locations: list) -> list:
+    """Generate mock jobs matching the target locations."""
+    matched_jobs = []
+    for job in MOCK_JOBS:
+        # Check if the job's location is in our target list (case-insensitive)
+        if any(loc.lower() in job["location"].lower() for loc in target_locations):
+            # Create a copy and add a slightly random date found
+            job_copy = job.copy()
+            days_ago = random.randint(0, 3)
+            job_copy["date_found"] = (datetime.now() - timedelta(days=days_ago)).strftime("%Y-%m-%d %H:%M:%S")
+            matched_jobs.append(job_copy)
+    return matched_jobs
+
+LOCATION_TRANSLATIONS = {
+    "netanya": ["netanya", "natanya", "נתניה"],
+    "tel aviv": ["tel aviv", "tel-aviv", "תל אביב", "ת\"א", "מרכז"],
+    "herzliya": ["herzliya", "הרצליה"],
+    "raanana": ["raanana", "רעננה"],
+    "kfar saba": ["kfar saba", "כפר סבא"],
+    "hod hasharon": ["hod hasharon", "הוד השרון"],
+    "petah tikva": ["petah tikva", "פתח תקווה", "פתח-תקווה", "פ\"ת"],
+    "haifa": ["haifa", "חיפה"]
+}
+
+def match_location(job_loc: str, target_locs: list) -> bool:
+    """Check if job location matches target locations (case and translation-aware)."""
+    job_loc_lower = job_loc.lower()
+    for target in target_locs:
+        target_clean = target.strip().lower()
+        if not target_clean:
+            continue
+        
+        # Check translation dictionary for variations (handles Hebrew/English mappings)
+        if target_clean in LOCATION_TRANSLATIONS:
+            variations = LOCATION_TRANSLATIONS[target_clean]
+            if any(var in job_loc_lower for var in variations):
+                return True
+        else:
+            # Substring match fallback for custom locations
+            if target_clean in job_loc_lower:
+                return True
+    return False
+
+def scrape_full_job_description(url: str, headers: dict) -> str:
+    """Fetch the full description and requirements from the direct job page."""
+    try:
+        r = requests.get(url, headers=headers, timeout=5)
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            desc_el = soup.find(class_="jobDes")
+            req_el = soup.find(class_="job-requirements")
+            
+            description_parts = []
+            if desc_el:
+                description_parts.append(desc_el.get_text().strip())
+            if req_el:
+                description_parts.append(req_el.get_text().strip())
+                
+            if description_parts:
+                return "\n\n".join(description_parts)
+    except Exception as e:
+        print(f"Error fetching full description from {url}: {e}")
+    return ""
+
+def search_live_jobs(target_locations: list, query: str = "Product Manager") -> list:
+    """
+    Scrape jobs from Drushim and filter based on target locations.
+    Falls back to mock jobs on failure or if no jobs match.
+    """
+    jobs = []
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
+    }
+    
+    # 1. Fetch main search page from Drushim
+    search_url = "https://www.drushim.co.il/jobs/search/product%20manager/"
+    print(f"Scraping Drushim listings: {search_url}")
+    
+    try:
+        r = requests.get(search_url, headers=headers, timeout=8)
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            job_items = soup.find_all("div", class_="job-item")
+            print(f"Found {len(job_items)} raw job elements on page.")
+            
+            for item in job_items:
+                # Parse title
+                title_el = item.find("span", class_="job-url") or item.find("h3")
+                title = title_el.text.strip() if title_el else ""
+                
+                # Parse link
+                url = ""
+                link_el = item.find("a", href=True)
+                if link_el:
+                    url = link_el["href"]
+                    if url.startswith("/"):
+                        url = "https://www.drushim.co.il" + url
+                        
+                # Parse company
+                company_el = item.find(class_="grow-none")
+                company = "Unknown"
+                if company_el:
+                    company_span = company_el.find("span")
+                    if company_span:
+                        company = company_span.text.strip()
+                        
+                # Parse location
+                location = "Unknown"
+                sub_el = item.find(class_="job-details-sub")
+                if sub_el:
+                    loc_span = sub_el.find("span", class_="display-18")
+                    if loc_span:
+                        location = loc_span.get_text().split("|")[0].strip()
+                        
+                # Filter by location (translation-aware check)
+                if match_location(location, target_locations):
+                    # We get the brief summary description as initial fallback
+                    summary_el = item.find(class_="job-intro")
+                    description = summary_el.text.strip() if summary_el else ""
+                    
+                    # Fetch full description from the direct page (to run detailed LLM match)
+                    if url:
+                        print(f"Location match: {location}. Fetching full details for '{title}'...")
+                        full_desc = scrape_full_job_description(url, headers)
+                        if full_desc:
+                            description = full_desc
+                            
+                    jobs.append({
+                        "title": title,
+                        "company": company,
+                        "location": location,
+                        "url": url,
+                        "description": description,
+                        "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+                    
+        print(f"Parsed {len(jobs)} jobs after location filtering.")
+    except Exception as e:
+        print(f"Error scraping live jobs: {e}")
+        
+    # 2. Fallback / Mock combination
+    # If no live jobs matched, fall back to mock jobs so the user always has demo data to verify
+    if not jobs:
+        print("No live jobs matched target locations. Loading mock listings...")
+        jobs = fetch_mock_jobs(target_locations)
+        
+    return jobs
