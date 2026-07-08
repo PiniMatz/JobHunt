@@ -93,7 +93,21 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
             <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>📍 {job.location}</span>
           </div>
           <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
-            {job.title}
+            {job.url ? (
+              <a 
+                href={job.url} 
+                target="_blank" 
+                rel="noopener noreferrer" 
+                style={{ color: 'inherit', textDecoration: 'none', transition: 'color 0.2s' }}
+                onMouseEnter={(e) => e.target.style.color = 'var(--accent-purple)'}
+                onMouseLeave={(e) => e.target.style.color = 'inherit'}
+                onClick={(e) => e.stopPropagation()}
+              >
+                {job.title} 🔗
+              </a>
+            ) : (
+              job.title
+            )}
           </h3>
         </div>
         

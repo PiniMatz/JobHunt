@@ -164,9 +164,69 @@ def scrape_full_job_description(url: str, headers: dict) -> str:
         print(f"Error fetching full description from {url}: {e}")
     return ""
 
+def scrape_jobmaster(target_locations: list) -> list:
+    """Scrape JobMaster page 1 for 'מנהל מוצר' listings."""
+    jobs = []
+    url = "https://www.jobmaster.co.il/jobs/?q=%D7%9E%D7%A0%D7%94%D7%9C+%D7%9E%D7%95%D7%A6%D7%A8"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7",
+    }
+    print(f"Scraping JobMaster listings: {url}")
+    try:
+        r = requests.get(url, headers=headers, timeout=8)
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            job_items = soup.find_all(class_="JobItem")
+            print(f"Found {len(job_items)} raw job elements on JobMaster.")
+            
+            for item in job_items:
+                # Title
+                title_el = item.find(class_="CardHeader") or item.find("h2") or item.find("h3")
+                title = title_el.text.strip() if title_el else ""
+                
+                # Company
+                company_el = item.find(class_="ByTitle")
+                company = company_el.text.strip() if company_el else "Unknown"
+                
+                # Location
+                location_el = item.find(class_="jobLocation")
+                location = location_el.text.strip() if location_el else "Unknown"
+                
+                # Description
+                desc_el = item.find(class_="jobShortDescription")
+                description = desc_el.text.strip() if desc_el else ""
+                
+                # Extract Job ID for direct URL
+                job_url = ""
+                onclick = item.get("onclick", "")
+                import re
+                match = re.search(r"ModaaClick\((\d+)", onclick)
+                if match:
+                    job_id = match.group(1)
+                    job_url = f"https://www.jobmaster.co.il/jobs/?q={job_id}"
+                else:
+                    # Fallback to search term search link
+                    job_url = "https://www.jobmaster.co.il/jobs/?q=%D7%9E%D7%A0%D7%94%D7%9C+%D7%9E%D7%95%D7%A6%D7%A8"
+                
+                # Filter by location (translation-aware check)
+                if title and match_location(location, target_locations):
+                    jobs.append({
+                        "title": title,
+                        "company": company,
+                        "location": location,
+                        "url": job_url,
+                        "description": description,
+                        "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                    })
+            print(f"JobMaster: matched {len(jobs)} jobs for locations {target_locations}")
+    except Exception as e:
+        print(f"Error scraping JobMaster: {e}")
+    return jobs
+
 def search_live_jobs(target_locations: list, query: str = "Product Manager") -> list:
     """
-    Scrape jobs from Drushim and filter based on target locations.
+    Scrape jobs from Drushim (pages 1-3) and JobMaster (page 1), then filter.
     Falls back to mock jobs on failure or if no jobs match.
     """
     jobs = []
@@ -176,73 +236,87 @@ def search_live_jobs(target_locations: list, query: str = "Product Manager") -> 
         "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8"
     }
     
-    # 1. Fetch main search page from Drushim
-    search_url = "https://www.drushim.co.il/jobs/search/product%20manager/"
-    print(f"Scraping Drushim listings: {search_url}")
-    
-    try:
-        r = requests.get(search_url, headers=headers, timeout=8)
-        if r.status_code == 200:
-            soup = BeautifulSoup(r.text, "html.parser")
-            job_items = soup.find_all("div", class_="job-item")
-            print(f"Found {len(job_items)} raw job elements on page.")
+    # 1. Scrape Drushim (Pages 1 to 3)
+    for page in range(1, 4):
+        if page == 1:
+            search_url = "https://www.drushim.co.il/jobs/search/product%20manager/"
+        else:
+            search_url = f"https://www.drushim.co.il/jobs/search/product%20manager/{page}/"
             
-            for item in job_items:
-                # Parse title
-                title_el = item.find("span", class_="job-url") or item.find("h3")
-                title = title_el.text.strip() if title_el else ""
-                
-                # Parse link
-                url = ""
-                link_el = item.find("a", href=True)
-                if link_el:
-                    url = link_el["href"]
-                    if url.startswith("/"):
-                        url = "https://www.drushim.co.il" + url
-                        
-                # Parse company
-                company_el = item.find(class_="grow-none")
-                company = "Unknown"
-                if company_el:
-                    company_span = company_el.find("span")
-                    if company_span:
-                        company = company_span.text.strip()
-                        
-                # Parse location
-                location = "Unknown"
-                sub_el = item.find(class_="job-details-sub")
-                if sub_el:
-                    loc_span = sub_el.find("span", class_="display-18")
-                    if loc_span:
-                        location = loc_span.get_text().split("|")[0].strip()
-                        
-                # Filter by location (translation-aware check)
-                if match_location(location, target_locations):
-                    # We get the brief summary description as initial fallback
-                    summary_el = item.find(class_="job-intro")
-                    description = summary_el.text.strip() if summary_el else ""
-                    
-                    # Fetch full description from the direct page (to run detailed LLM match)
-                    if url:
-                        print(f"Location match: {location}. Fetching full details for '{title}'...")
-                        full_desc = scrape_full_job_description(url, headers)
-                        if full_desc:
-                            description = full_desc
-                            
-                    jobs.append({
-                        "title": title,
-                        "company": company,
-                        "location": location,
-                        "url": url,
-                        "description": description,
-                        "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-                    })
-                    
-        print(f"Parsed {len(jobs)} jobs after location filtering.")
-    except Exception as e:
-        print(f"Error scraping live jobs: {e}")
+        print(f"Scraping Drushim listings (page {page}): {search_url}")
         
-    # 2. Fallback / Mock combination
+        try:
+            r = requests.get(search_url, headers=headers, timeout=8)
+            if r.status_code == 200:
+                soup = BeautifulSoup(r.text, "html.parser")
+                job_items = soup.find_all("div", class_="job-item")
+                print(f"Drushim page {page}: found {len(job_items)} raw job elements.")
+                
+                for item in job_items:
+                    # Parse title
+                    title_el = item.find("span", class_="job-url") or item.find("h3")
+                    title = title_el.text.strip() if title_el else ""
+                    
+                    # Parse link
+                    url = ""
+                    link_el = item.find("a", href=True)
+                    if link_el:
+                        url = link_el["href"]
+                        if url.startswith("/"):
+                            url = "https://www.drushim.co.il" + url
+                            
+                    # Parse company
+                    company_el = item.find(class_="grow-none")
+                    company = "Unknown"
+                    if company_el:
+                        company_span = company_el.find("span")
+                        if company_span:
+                            company = company_span.text.strip()
+                            
+                    # Parse location
+                    location = "Unknown"
+                    sub_el = item.find(class_="job-details-sub")
+                    if sub_el:
+                        loc_span = sub_el.find("span", class_="display-18")
+                        if loc_span:
+                            location = loc_span.get_text().split("|")[0].strip()
+                            
+                    # Filter by location (translation-aware check)
+                    if title and match_location(location, target_locations):
+                        # We get the brief summary description as initial fallback
+                        summary_el = item.find(class_="job-intro")
+                        description = summary_el.text.strip() if summary_el else ""
+                        
+                        # Fetch full description from the direct page (to run detailed LLM match)
+                        if url:
+                            print(f"Drushim match: {location}. Fetching full details for '{title}'...")
+                            full_desc = scrape_full_job_description(url, headers)
+                            if full_desc:
+                                description = full_desc
+                                
+                        jobs.append({
+                            "title": title,
+                            "company": company,
+                            "location": location,
+                            "url": url,
+                            "description": description,
+                            "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        })
+            else:
+                print(f"Failed to fetch Drushim page {page}: Status {r.status_code}")
+        except Exception as e:
+            print(f"Error scraping Drushim page {page}: {e}")
+
+    # 2. Scrape JobMaster (Page 1)
+    try:
+        jobmaster_jobs = scrape_jobmaster(target_locations)
+        jobs.extend(jobmaster_jobs)
+    except Exception as e:
+        print(f"Error executing JobMaster scraper flow: {e}")
+
+    print(f"Combined scraper: parsed {len(jobs)} matching jobs in total.")
+
+    # 3. Fallback / Mock combination
     # If no live jobs matched, fall back to mock jobs so the user always has demo data to verify
     if not jobs:
         print("No live jobs matched target locations. Loading mock listings...")
