@@ -1,10 +1,13 @@
 import React, { useState } from 'react';
 
-const JobCard = ({ job, onStatusChange, onDelete }) => {
+const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
   const [expanded, setExpanded] = useState(false);
   const [suggestions, setSuggestions] = useState(null);
   const [loadingSuggestions, setLoadingSuggestions] = useState(false);
   const [errorSuggestions, setErrorSuggestions] = useState('');
+  
+  const [runningMatch, setRunningMatch] = useState(false);
+  const [matchError, setMatchError] = useState('');
 
   const match = job.match;
   const overallScore = match ? match.overall_score : null;
@@ -22,6 +25,29 @@ const JobCard = ({ job, onStatusChange, onDelete }) => {
       case 'applied': return '✔️';
       case 'dismissed': return '🗑️';
       default: return '💼';
+    }
+  };
+
+  const handleRunMatch = async (e) => {
+    e.stopPropagation();
+    setRunningMatch(true);
+    setMatchError('');
+    try {
+      const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/match`, {
+        method: 'POST',
+      });
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.detail || 'Failed to match job');
+      }
+      const updatedJob = await response.json();
+      if (onJobUpdate) {
+        onJobUpdate(updatedJob);
+      }
+    } catch (err) {
+      setMatchError(err.message);
+    } finally {
+      setRunningMatch(false);
     }
   };
 
@@ -71,7 +97,7 @@ const JobCard = ({ job, onStatusChange, onDelete }) => {
           </h3>
         </div>
         
-        {overallScore !== null && (
+        {overallScore !== null ? (
           <div style={{
             display: 'flex',
             flexDirection: 'column',
@@ -86,6 +112,35 @@ const JobCard = ({ job, onStatusChange, onDelete }) => {
               {overallScore}%
             </span>
             <span style={{ fontSize: '0.65rem', color: 'var(--text-secondary)', textTransform: 'uppercase' }}>Match</span>
+          </div>
+        ) : (
+          <div onClick={(e) => e.stopPropagation()} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.35rem' }}>
+            <button
+              onClick={handleRunMatch}
+              disabled={runningMatch}
+              style={{
+                padding: '0.4rem 0.85rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: 'linear-gradient(135deg, var(--accent-purple), var(--accent-blue))',
+                color: 'white',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                fontSize: '0.75rem',
+                boxShadow: '0 2px 8px rgba(139, 92, 246, 0.2)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                transition: 'all 0.2s'
+              }}
+            >
+              {runningMatch ? 'Analyzing...' : 'Analyze Match ⚡'}
+            </button>
+            {matchError && (
+              <span style={{ fontSize: '0.65rem', color: 'var(--score-low)', maxWidth: '160px', textAlign: 'right' }}>
+                {matchError}
+              </span>
+            )}
           </div>
         )}
       </div>

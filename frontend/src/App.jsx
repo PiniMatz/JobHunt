@@ -108,6 +108,12 @@ function App() {
     }
   };
 
+  const handleJobUpdate = (updatedJob) => {
+    setJobs(prevJobs => prevJobs.map(job => 
+      job.id === updatedJob.id ? updatedJob : job
+    ));
+  };
+
   const handleSaveSettings = async (e) => {
     e.preventDefault();
     setSettingsSuccessMessage('');
@@ -176,7 +182,10 @@ function App() {
 
     if (dashboardView === 'matched') {
       const score = job.match ? job.match.overall_score : 0;
-      return job.status !== 'applied' && score >= localThreshold;
+      return job.match && job.status !== 'applied' && score >= localThreshold;
+    }
+    if (dashboardView === 'unanalyzed') {
+      return !job.match && job.status !== 'applied';
     }
     if (dashboardView === 'saved') {
       return job.status === 'starred';
@@ -358,7 +367,23 @@ function App() {
                 }}
                 onClick={() => setDashboardView('matched')}
               >
-                ✨ Ideal Matches ({jobs.filter(j => j.status !== 'applied' && (j.match ? j.match.overall_score : 0) >= localThreshold).length})
+                ✨ Ideal Matches ({jobs.filter(j => j.status !== 'applied' && j.status !== 'dismissed' && j.match && j.match.overall_score >= localThreshold).length})
+              </button>
+
+              <button 
+                style={{
+                  padding: '0.5rem 0.25rem',
+                  border: 'none',
+                  borderBottom: dashboardView === 'unanalyzed' ? '2px solid var(--accent-purple)' : 'none',
+                  backgroundColor: 'transparent',
+                  color: dashboardView === 'unanalyzed' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  fontSize: '0.9rem'
+                }}
+                onClick={() => setDashboardView('unanalyzed')}
+              >
+                🔍 Unanalyzed ({jobs.filter(j => !j.match && j.status !== 'applied' && j.status !== 'dismissed').length})
               </button>
               
               <button 
@@ -420,6 +445,7 @@ function App() {
                     key={job.id} 
                     job={job} 
                     onStatusChange={handleStatusChange} 
+                    onJobUpdate={handleJobUpdate}
                   />
                 ))}
               </div>

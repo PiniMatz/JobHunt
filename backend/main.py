@@ -55,8 +55,6 @@ def scan_jobs():
             raise HTTPException(status_code=400, detail="Settings are not initialized.")
             
         locations = settings.get("locations", ["Netanya"])
-        cv_markdown = settings.get("cv_markdown", "")
-        api_key = settings.get("api_key", "")
         
         # 1. Fetch listings
         listings = search_live_jobs(locations)
@@ -64,55 +62,77 @@ def scan_jobs():
         
         for job in listings:
             # 2. Add to database (checks duplicates internally)
-            job_id = database.add_job(
+            database.add_job(
                 title=job["title"],
                 company=job["company"],
                 location=job["location"],
                 description=job["description"],
                 url=job.get("url")
             )
-            
-            # 3. If there is a CV, perform matching analysis (unless already analyzed)
-            # To check if already matched, let's see if we should fetch matches
-            # For simplicity, we match all new/updated jobs
-            if cv_markdown:
-                # Local pre-screening check to save API costs
-                is_relevant, reason = pre_screen_job(job["title"], job["description"], settings)
-                
-                if is_relevant:
-                    match_analysis = analyze_job_match(
-                        cv_markdown=cv_markdown,
-                        job_title=job["title"],
-                        job_description=job["description"],
-                        api_key=api_key
-                    )
-                    database.save_match_result(
-                        job_id=job_id,
-                        overall_score=match_analysis["overall_score"],
-                        tech_score=match_analysis["tech_score"],
-                        data_score=match_analysis["data_score"],
-                        pm_score=match_analysis["pm_score"],
-                        fit_score=match_analysis["fit_score"],
-                        pros=match_analysis["pros"],
-                        cons=match_analysis["cons"],
-                        red_flags=match_analysis["red_flags"]
-                    )
-                else:
-                    # Skip LLM call entirely
-                    database.save_match_result(
-                        job_id=job_id,
-                        overall_score=5,
-                        tech_score=0,
-                        data_score=0,
-                        pm_score=0,
-                        fit_score=0,
-                        pros=[],
-                        cons=[f"Local Pre-screen: {reason}"],
-                        red_flags=["Screened out locally to save API cost."]
-                    )
             new_jobs_count += 1
             
         return {"status": "success", "jobs_scanned": len(listings), "new_jobs": new_jobs_count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/jobs/{job_id}/match")
+def match_job(job_id: int):
+    try:
+        settings = database.get_settings()
+        if not settings:
+            raise HTTPException(status_code=400, detail="Settings are not initialized.")
+            
+        cv_markdown = settings.get("cv_markdown", "")
+        api_key = settings.get("api_key", "")
+        
+        if not cv_markdown:
+            raise HTTPException(status_code=400, detail="Please upload or paste your CV in Settings/My CV before analyzing matches.")
+            
+        # Get job details from DB
+        jobs = database.get_jobs_with_matches()
+        target_job = next((j for j in jobs if j["id"] == job_id), None)
+        if not target_job:
+            raise HTTPException(status_code=404, detail="Job listing not found.")
+            
+        # Run local pre-screening check to save API costs
+        is_relevant, reason = pre_screen_job(target_job["title"], target_job["description"], settings)
+        
+        if is_relevant:
+            match_analysis = analyze_job_match(
+                cv_markdown=cv_markdown,
+                job_title=target_job["title"],
+                job_description=target_job["description"],
+                api_key=api_key
+            )
+            database.save_match_result(
+                job_id=job_id,
+                overall_score=match_analysis["overall_score"],
+                tech_score=match_analysis["tech_score"],
+                data_score=match_analysis["data_score"],
+                pm_score=match_analysis["pm_score"],
+                fit_score=match_analysis["fit_score"],
+                pros=match_analysis["pros"],
+                cons=match_analysis["cons"],
+                red_flags=match_analysis["red_flags"]
+            )
+        else:
+            # Skip LLM call entirely
+            database.save_match_result(
+                job_id=job_id,
+                overall_score=5,
+                tech_score=0,
+                data_score=0,
+                pm_score=0,
+                fit_score=0,
+                pros=[],
+                cons=[f"Local Pre-screen: {reason}"],
+                red_flags=["Screened out locally to save API cost."]
+            )
+            
+        # Return the updated job with match info
+        updated_jobs = database.get_jobs_with_matches()
+        updated_job = next((j for j in updated_jobs if j["id"] == job_id), None)
+        return updated_job
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
