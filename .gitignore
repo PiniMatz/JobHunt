@@ -30,6 +30,11 @@ dist-ssr/
 .env.local
 .env.*.local
 
+# Private User CV files
+*.pdf
+backend/parsed_cv.md
+parsed_cv.md
+
 # IDEs
 .vscode/
 .idea/
