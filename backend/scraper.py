@@ -224,9 +224,65 @@ def scrape_jobmaster(target_locations: list) -> list:
         print(f"Error scraping JobMaster: {e}")
     return jobs
 
+def scrape_gotfriends(target_locations: list) -> list:
+    """Scrape GotFriends for active Product Manager listings."""
+    jobs = []
+    url = "https://www.gotfriends.co.il/jobslobby/projects/product-manager/"
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        "Accept-Language": "he-IL,he;q=0.9,en-US;q=0.8,en;q=0.7",
+    }
+    print(f"Scraping GotFriends listings: {url}")
+    try:
+        r = requests.get(url, headers=headers, timeout=8)
+        if r.status_code == 200:
+            soup = BeautifulSoup(r.text, "html.parser")
+            list_div = soup.find(class_="jobs_list")
+            if list_div:
+                job_items = list_div.find_all(class_="item")
+                print(f"Found {len(job_items)} raw job elements on GotFriends.")
+                
+                for item in job_items:
+                    # Title & link
+                    title_el = item.find("h2", class_="title") or item.find(class_="title")
+                    title = title_el.text.strip() if title_el else ""
+                    
+                    link_el = item.find("a", class_="position") or item.find("a")
+                    job_url = ""
+                    if link_el and link_el.has_attr("href"):
+                        job_url = link_el["href"]
+                        if job_url.startswith("/"):
+                            job_url = "https://www.gotfriends.co.il" + job_url
+                            
+                    # Location
+                    loc_el = item.find(class_="info-data")
+                    location = loc_el.text.strip() if loc_el else "Unknown"
+                    
+                    # Description (combination of desc divs)
+                    desc_divs = item.find_all(class_="desc")
+                    description = "\n\n".join([d.text.strip() for d in desc_divs]) if desc_divs else ""
+                    
+                    # Company
+                    company = "GotFriends Tech Client"
+                    
+                    # Filter by location (translation-aware check)
+                    if title and match_location(location, target_locations):
+                        jobs.append({
+                            "title": title,
+                            "company": company,
+                            "location": location,
+                            "url": job_url,
+                            "description": description,
+                            "date_found": datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+                        })
+                print(f"GotFriends: matched {len(jobs)} jobs for locations {target_locations}")
+    except Exception as e:
+        print(f"Error scraping GotFriends: {e}")
+    return jobs
+
 def search_live_jobs(target_locations: list, query: str = "Product Manager") -> list:
     """
-    Scrape jobs from Drushim (pages 1-3) and JobMaster (page 1), then filter.
+    Scrape jobs from Drushim (pages 1-3), JobMaster (page 1), and GotFriends, then filter.
     Falls back to mock jobs on failure or if no jobs match.
     """
     jobs = []
@@ -314,9 +370,16 @@ def search_live_jobs(target_locations: list, query: str = "Product Manager") -> 
     except Exception as e:
         print(f"Error executing JobMaster scraper flow: {e}")
 
+    # 3. Scrape GotFriends
+    try:
+        gotfriends_jobs = scrape_gotfriends(target_locations)
+        jobs.extend(gotfriends_jobs)
+    except Exception as e:
+        print(f"Error executing GotFriends scraper flow: {e}")
+
     print(f"Combined scraper: parsed {len(jobs)} matching jobs in total.")
 
-    # 3. Fallback / Mock combination
+    # 4. Fallback / Mock combination
     # If no live jobs matched, fall back to mock jobs so the user always has demo data to verify
     if not jobs:
         print("No live jobs matched target locations. Loading mock listings...")
