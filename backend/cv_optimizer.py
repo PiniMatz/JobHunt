@@ -53,7 +53,7 @@ def suggest_cv_updates(cv_markdown: str, job_title: str, job_description: str, a
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-1.5-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
         
         prompt = (
             "You are an expert resume writer and career coach. Compare the candidate's CV "
