@@ -30,6 +30,12 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
     return 'Web Listing';
   };
 
+  const isRtl = (text) => {
+    if (!text) return false;
+    // Check for Hebrew character range
+    return /[\u0590-\u05FF]/.test(text);
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'starred': return '⭐';
@@ -116,7 +122,13 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
             </span>
             <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>📍 {job.location}</span>
           </div>
-          <h3 style={{ fontSize: '1.3rem', color: 'var(--text-primary)', marginBottom: '0.5rem' }}>
+          <h3 style={{ 
+            fontSize: '1.3rem', 
+            color: 'var(--text-primary)', 
+            marginBottom: '0.5rem',
+            direction: isRtl(job.title) ? 'rtl' : 'ltr',
+            textAlign: isRtl(job.title) ? 'right' : 'left'
+          }}>
             {job.url ? (
               <a 
                 href={job.url} 
@@ -303,7 +315,14 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
           {match && (
             <div style={{ marginBottom: '1.25rem' }}>
               <h4 style={{ color: 'var(--accent-purple)', fontSize: '1.05rem', marginBottom: '0.5rem' }}>💡 AI Matching Analysis</h4>
-              <p style={{ color: 'var(--text-primary)', fontStyle: 'italic', marginBottom: '1rem', fontSize: '0.95rem' }}>
+              <p style={{ 
+                color: 'var(--text-primary)', 
+                fontStyle: 'italic', 
+                marginBottom: '1rem', 
+                fontSize: '0.95rem',
+                direction: isRtl(match.explanation) ? 'rtl' : 'ltr',
+                textAlign: isRtl(match.explanation) ? 'right' : 'left'
+              }}>
                 &ldquo;{match.explanation || 'No summary available.'}&rdquo;
               </p>
               
@@ -349,7 +368,9 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
               fontSize: '0.9rem',
               whiteSpace: 'pre-wrap',
               maxHeight: '200px',
-              overflowY: 'auto'
+              overflowY: 'auto',
+              direction: isRtl(job.description) ? 'rtl' : 'ltr',
+              textAlign: isRtl(job.description) ? 'right' : 'left'
             }}>
               {job.description}
             </div>
