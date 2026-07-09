@@ -1,0 +1,125 @@
+
+--- Drushim Raw Locations ---
+Title: Product Manager, Location: פתח תקווה
+Title: Product Manager -B2C, Location: פתח תקווה
+Title: Product Manager, Location: פתח תקווה
+Title: Digital Product Manager, Location: רמת גן
+Title: Ecommerce Product Manager, Location: תל אביב
+Title: מנהל/ת בטיחות מוצר ומעבדה לחברת מגנום יש, Location: עכו
+Title: AI Product Owner, Location: רעננה
+Title: דרוש/ה מנהל/ת מוצר בתחום הבנייה, Location: מספר מקומות
+Title: מנהל מוצר סימולטור- הפניקס סוכנויות, Location: פתח תקווה
+Title: מנהל /ת מוצר ופרויקטים ב-GenAI לעולמות ה, Location: קיסריה
+Title: מנהל/ת מוצר מותג LG, Location: כפר סבא
+Title: מנהל /ת מוצר לחברה דרמו-קוסמטית ביקום, Location: מספר מקומות
+Title: Associate Product Owner, Location: רמת גן
+Title: מנהל.ת מוצר ג'נסיס, Location: ראש העין
+Title: מנהל/ת מוצר לתחום מערכות אבטחה ומתח נמוך, Location: פתח תקווה
+Title: למוסד בטחוני דרוש/ה AI Product Owner, Location: באר יעקב
+Title: למשרד ממשלתי דרוש.ה מנהל.ת מוצר, Location: ירושלים
+Title: מנהל/ת מוצר – פורטל סוכנים, Location: רמת גן
+Title: מנהל/ת מוצר ומנתח/ת מערכות לארגון בריאות, Location: בני ברק
+Title: הפניקס מגייסת מנהל\ת מוצר AI עם אש בעיני, Location: ראשון לציון
+Title: מנהל.ת מחלקת מוצר דיגיטל בשיווק, Location: ראש העין
+Title: Head of digital product, Location: תל אביב
+Title: מנהל /ת מוצר מנוסה - החלפה לחל"ד, Location: ירושלים
+Title: מנהל.ת מוצר דיגיטל, Location: ראש העין
+Title: מנהל/ת מוצר בעולם האבטחת מידע, Location: פתח תקווה
+Title: Associate Product Owner, Location: רמת גן
+Title: Head of digital product, Location: תל אביב
+Title: למטה אסותא דרוש/ה מנהל/ת מוצר דיגיטלי!, Location: רמת החייל
+Title: מנהל /ת מוצר לחברת תוכנה בדרום, Location: באר שבע
+Title: מנהל.ת מוצר דיגיטלי, Location: ראשון לציון
+Title: מנהל.ת מוצר דיגיטל, Location: רמת גן
+Title: מנהל/ת מוצר, Location: רמת גן
+Title: Digital Product Manager, Location: רמת גן
+Title: מנהל/ת מוצר דיגיטל, Location: רמת גן
+Title: מנהל.ת מוצר, Location: רמת גן
+Title: Product Manager -B2C, Location: פתח תקווה
+Title: מנהל/ת מוצר דיגיטל, Location: ראשון לציון
+Title: Senior Product Manager/Director of Produ, Location: מספר מקומות
+Title: Product Manager, Location: פתח תקווה
+Title: Product Manager, Location: פתח תקווה
+Title: Product Manager -B2C, Location: פתח תקווה
+Title: Product Manager, Location: פתח תקווה
+Title: Digital Product Manager, Location: רמת גן
+Title: Ecommerce Product Manager, Location: תל אביב
+Title: מנהל/ת בטיחות מוצר ומעבדה לחברת מגנום יש, Location: עכו
+Title: AI Product Owner, Location: רעננה
+Title: דרוש/ה מנהל/ת מוצר בתחום הבנייה, Location: מספר מקומות
+Title: מנהל מוצר סימולטור- הפניקס סוכנויות, Location: פתח תקווה
+Title: מנהל /ת מוצר ופרויקטים ב-GenAI לעולמות ה, Location: קיסריה
+Title: מנהל/ת מוצר מותג LG, Location: כפר סבא
+Title: מנהל /ת מוצר לחברה דרמו-קוסמטית ביקום, Location: מספר מקומות
+Title: מנהל.ת מוצר ג'נסיס, Location: ראש העין
+Title: מנהל/ת מוצר לתחום מערכות אבטחה ומתח נמוך, Location: פתח תקווה
+Title: למוסד בטחוני דרוש/ה AI Product Owner, Location: באר יעקב
+Title: למשרד ממשלתי דרוש.ה מנהל.ת מוצר, Location: ירושלים
+Title: מנהל/ת מוצר – פורטל סוכנים, Location: רמת גן
+Title: מנהל/ת מוצר ומנתח/ת מערכות לארגון בריאות, Location: בני ברק
+Title: הפניקס מגייסת מנהל\ת מוצר AI עם אש בעיני, Location: ראשון לציון
+Title: מנהל.ת מחלקת מוצר דיגיטל בשיווק, Location: ראש העין
+Title: מנהל /ת מוצר מנוסה - החלפה לחל"ד, Location: ירושלים
+Title: Product Manager -B2C, Location: פתח תקווה
+Title: מנהל/ת בטיחות מוצר ומעבדה לחברת מגנום יש, Location: עכו
+Title: מנהל/ת מוצר לתחום מערכות אבטחה ומתח נמוך, Location: פתח תקווה
+Title: למוסד בטחוני דרוש/ה AI Product Owner, Location: באר יעקב
+Title: מנהל.ת מחלקת מוצר דיגיטל בשיווק, Location: ראש העין
+Title: מנהל/ת מוצר לתחום הרכב, Location: מספר מקומות
+Title: מנהל.ת מוצר דיגיטל, Location: רמת גן
+Title: מנהל/ת מוצר טכני Safetica, Location: חולון
+Title: Software Developer SCM Team, Location: ראש העין
+Title: מנהל/ת מוצר ופרויקטים, Location: ירושלים
+Title: Data Engineer & AI, Location: חיפה
+Title: מנהל.ת מוצר דיגיטלי, Location: ראשון לציון
+Title: Digital Product Manager, Location: רמת גן
+Title: מנהל/ת מוצר, Location: רמת גן
+Title: מנהל.ת מוצר, Location: רמת גן
+Title: מנהל/ת מוצר דיגיטל, Location: רמת גן
+Title: Product Manager, Location: פתח תקווה
+Title: Product Manager, Location: פתח תקווה
+Title: מנהל.ת מוצר דיגיטל, Location: ראש העין
+Title: Product Manager Cybersecurity, Location: תל אביב
+Title: Senior Product Manager/Director of Produ, Location: מספר מקומות
+Title: Product Manager, Location: פתח תקווה
+Title: Product Manager, Location: פתח תקווה
+Title: Digital Product Manager, Location: רמת גן
+Title: Ecommerce Product Manager, Location: תל אביב
+Title: AI Product Owner, Location: רעננה
+Title: דרוש/ה מנהל/ת מוצר בתחום הבנייה, Location: מספר מקומות
+Title: מנהל מוצר סימולטור- הפניקס סוכנויות, Location: פתח תקווה
+Title: מנהל /ת מוצר ופרויקטים ב-GenAI לעולמות ה, Location: קיסריה
+Title: מנהל/ת מוצר מותג LG, Location: כפר סבא
+Title: מנהל /ת מוצר לחברה דרמו-קוסמטית ביקום, Location: מספר מקומות
+Title: Associate Product Owner, Location: רמת גן
+Title: מנהל.ת מוצר ג'נסיס, Location: ראש העין
+Title: למשרד ממשלתי דרוש.ה מנהל.ת מוצר, Location: ירושלים
+Title: מנהל/ת מוצר – פורטל סוכנים, Location: רמת גן
+Unique Locations: ['חיפה', 'ראשון לציון', 'מספר מקומות', 'עכו', 'קיסריה', 'ירושלים', 'כפר סבא', 'רעננה', 'באר שבע', 'רמת החייל', 'חולון', 'בני ברק', 'פתח תקווה', 'תל אביב', 'באר יעקב', 'ראש העין', 'רמת גן']
+
+--- JobMaster Raw Locations ---
+Title: מנהל /ת מוצר לתחום מערכות אבטחה ומתח נמו, Location: פתח תקווה
+Title: מנהל/ת  מוצר בתחום הפינטק, Location: גבעתיים,חולון,פתח תקווה,רמת גן,תל אביב יפו
+Title: מנהל מוצר- תחום ביטוח ופיננסים, Location: פתח תקווה
+Title: איש/אשת מכירות לתחום הרדיולוגיה הפולשנית, Location: שוהם
+Title: מנהל/ת מוצר AI עם תנאים מעולים, Location: עבודה מהבית, ראשון לציון
+Title: מנהל/ת מוצר לארגון ציבורי מוביל בירושלים, Location: ירושלים
+Title: סוכני מכירות שטח תחום אורתופדיה, Location: פתח תקווה
+Title: מנהל/ת  מוצר בתחום הפינטק, Location: גבעתיים, חולון, פתח תקווה, רמת גן, תל אביב יפו
+Title: דרוש/ה מנהל/ת מוצר בכיר/ה 🌟, Location: פתח תקווה
+Title: מהנדס מוצר | רכבי עבודה לעסקים, Location: ראש העין
+Title: מהנדס/ת מכשור רפואי, Location: ירושלים
+Title: מנהל/ת מוצר טכנולוגיות מתקדמות, Location: הוד השרון
+Title: מנהל/ת מוצר מותג LG, Location: כפר סבא
+
+--- GotFriends Raw Locations ---
+Title: Technical Product Manager באיזור הצפון, Location: חיפה והצפון
+Title: Senior Product Manager בחברת סטארט-אפ בת, Location: ת"א והמרכז
+Title: Senior Product Manager בחברת סטארט-אפ בת, Location: ת"א והמרכז
+Title: Data Platform Product Team Lead בחברת סט, Location: ת"א והמרכז
+Title: Product Manager בחברה טכנולוגית, Location: ת"א והמרכז
+Title: Backend Team Lead בחברת סטארט-אפ בתחום ה, Location: ת"א והמרכז
+Title: Senior Technical Product Manager בחברת A, Location: ת"א והמרכז
+Title: Senior Product Manager בחברת סטארט-אפ בת, Location: ת"א והמרכז
+Title: Senior Product Manager- FW & Embedded SW, Location: ת"א והמרכז
+Title: , Location: ת"א והמרכז
