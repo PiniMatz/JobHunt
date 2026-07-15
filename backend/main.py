@@ -40,6 +40,13 @@ class SettingsUpdate(BaseModel):
 class StatusUpdate(BaseModel):
     status: str
 
+class JobImport(BaseModel):
+    title: str
+    company: str
+    location: str
+    description: str
+    url: Optional[str] = None
+
 @app.get("/api/jobs")
 def get_jobs():
     try:
@@ -72,6 +79,23 @@ def scan_jobs():
             new_jobs_count += 1
             
         return {"status": "success", "jobs_scanned": len(listings), "new_jobs": new_jobs_count}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/jobs/import")
+def import_jobs(jobs: List[JobImport]):
+    try:
+        new_jobs_count = 0
+        for job in jobs:
+            database.add_job(
+                title=job.title,
+                company=job.company,
+                location=job.location,
+                description=job.description,
+                url=job.url
+            )
+            new_jobs_count += 1
+        return {"status": "success", "jobs_imported": len(jobs), "new_jobs": new_jobs_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
