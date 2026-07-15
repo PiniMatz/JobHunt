@@ -8,23 +8,58 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function startScan(sendResponse) {
   console.log("JobHunt Scan Started!");
   
-  // Find scrollable list container
-  const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list');
-  if (!listContainer) {
-    sendResponse({ status: "error", message: "Job list container not found. Make sure you are on a LinkedIn jobs search page." });
-    return;
-  }
+  // Find scrollable list container with multiple fallbacks
+  const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, .jobs-search__results-list, [class*="results-list"]');
   
   // Scroll list container to bottom to trigger lazy loading of list cards
-  listContainer.scrollTop = listContainer.scrollHeight;
-  await new Promise(r => setTimeout(r, 1500));
-  listContainer.scrollTop = 0;
+  if (listContainer) {
+    listContainer.scrollTop = listContainer.scrollHeight;
+    await new Promise(r => setTimeout(r, 1500));
+    listContainer.scrollTop = 0;
+  } else {
+    // Fallback to scrolling window
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    await new Promise(r => setTimeout(r, 1500));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
   
-  const items = Array.from(document.querySelectorAll('.scaffold-layout__list-container li[data-occludable-job-id], .jobs-search-results-list__list-item'));
+  // Robust selectors for job cards
+  const selectors = [
+    '.scaffold-layout__list-container li[data-occludable-job-id]',
+    'li[data-occludable-job-id]',
+    '.jobs-search-results-list__list-item',
+    '.job-card-container',
+    '[data-job-id]'
+  ];
+  
+  let items = [];
+  for (const selector of selectors) {
+    items = Array.from(document.querySelectorAll(selector));
+    if (items.length > 0) {
+      console.log(`Matched selector: ${selector} with ${items.length} items.`);
+      break;
+    }
+  }
+  
+  // Fallback: search for direct jobs/view links
+  if (items.length === 0) {
+    const jobLinks = Array.from(document.querySelectorAll('a[href*="/jobs/view/"]'));
+    if (jobLinks.length > 0) {
+      items = jobLinks.map(link => {
+        let parent = link.parentElement;
+        while (parent && parent.tagName !== 'LI' && !parent.classList.contains('job-card-container')) {
+          parent = parent.parentElement;
+        }
+        return parent || link;
+      }).filter((v, i, self) => self.indexOf(v) === i);
+      console.log(`Fallback matched ${items.length} items from jobs/view links.`);
+    }
+  }
+  
   console.log(`Found ${items.length} job cards to scan.`);
   
   if (items.length === 0) {
-    sendResponse({ status: "error", message: "No job cards found on this page." });
+    sendResponse({ status: "error", message: "No job cards found. Make sure you are on the LinkedIn jobs page and jobs are visible." });
     return;
   }
   
@@ -43,24 +78,28 @@ async function startScan(sendResponse) {
     });
     
     // Scroll item into view and click it
-    item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    const clickable = item.querySelector('a.job-card-list__title, .job-card-container') || item;
-    clickable.click();
+    if (item.scrollIntoView) {
+      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+    const clickable = item.querySelector('a.job-card-list__title, .job-card-container, a[href*="/jobs/view/"]') || item;
+    if (clickable && clickable.click) {
+      clickable.click();
+    }
     
     // Wait for description pane to load
     await new Promise(r => setTimeout(r, 2000));
     
-    // Extract info
-    const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, h1.t-24, .jobs-unified-top-card__job-title');
+    // Extract info with robust selectors
+    const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, h1.t-24, .jobs-unified-top-card__job-title, h2.jobs-details-toggle__title');
     const title = titleEl ? titleEl.textContent.trim() : "";
     
-    const companyEl = document.querySelector('.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name');
+    const companyEl = document.querySelector('.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name, .jobs-details-toggle__company-name');
     const company = companyEl ? companyEl.textContent.trim() : "LinkedIn Poster";
     
-    const locationEl = document.querySelector('.job-details-jobs-unified-top-card__primary-description-container span, .jobs-unified-top-card__bullet, .jobs-unified-top-card__primary-description span');
+    const locationEl = document.querySelector('.job-details-jobs-unified-top-card__primary-description-container span, .jobs-unified-top-card__bullet, .jobs-unified-top-card__primary-description span, .jobs-details-toggle__job-location');
     const location = locationEl ? locationEl.textContent.trim().split('·')[0].trim() : "Israel";
     
-    const descEl = document.querySelector('.jobs-description-content__text, .jobs-description__container, .jobs-box__html-content');
+    const descEl = document.querySelector('.jobs-description-content__text, .jobs-description__container, .jobs-box__html-content, .jobs-description');
     const description = descEl ? descEl.textContent.trim() : "";
     
     // Extract URL
