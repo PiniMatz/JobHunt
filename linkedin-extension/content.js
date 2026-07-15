@@ -20,33 +20,32 @@ async function startScan(sendResponse) {
   const maxJobsToScan = 25; // Crawl depth limit per search page
 
   while (scannedJobIds.size < maxJobsToScan && consecutiveFailures < 6) {
-    // Query currently rendered cards
-    const cards = Array.from(document.querySelectorAll('li[data-occludable-job-id], [data-job-id], .job-card-container'));
+    // Query currently rendered cards dynamically via view links
+    const cards = [];
+    const jobLinks = Array.from(document.querySelectorAll('a[href*="/jobs/view/"]'));
+    
+    jobLinks.forEach(link => {
+      const card = link.closest('li, .job-card-container, [data-job-id]') || link;
+      const href = link.getAttribute('href') || "";
+      const m = href.match(/\/view\/(\d+)/) || href.match(/currentJobId=(\d+)/);
+      const jobId = m ? m[1] : null;
+      
+      if (jobId && !cards.some(c => c.jobId === jobId)) {
+        cards.push({ card, jobId, link });
+      }
+    });
     
     // Find the first unscanned card
-    let targetCard = null;
-    let targetJobId = null;
-    
-    for (const card of cards) {
-      let jobId = card.getAttribute('data-occludable-job-id') || card.getAttribute('data-job-id');
-      if (!jobId) {
-        // Fallback to finding href
-        const link = card.querySelector('a[href*="/jobs/view/"]');
-        if (link) {
-          const m = link.href.match(/\/view\/(\d+)/);
-          if (m) jobId = m[1];
-        }
-      }
-      
-      if (jobId && !scannedJobIds.has(jobId)) {
-        targetCard = card;
-        targetJobId = jobId;
+    let target = null;
+    for (const item of cards) {
+      if (!scannedJobIds.has(item.jobId)) {
+        target = item;
         break;
       }
     }
     
     // If no unscanned card is found, scroll list container down to load more virtualized items
-    if (!targetCard) {
+    if (!target) {
       console.log("No new visible cards found, scrolling list down...");
       if (listContainer) {
         listContainer.scrollTop += 350;
@@ -59,6 +58,7 @@ async function startScan(sendResponse) {
     }
     
     consecutiveFailures = 0; // Reset failure counter on target card found
+    const targetJobId = target.jobId;
     
     // Send progress update
     chrome.runtime.sendMessage({ 
@@ -69,12 +69,11 @@ async function startScan(sendResponse) {
     });
     
     // Scroll and Click card
-    if (targetCard.scrollIntoView) {
-      targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    if (target.card.scrollIntoView) {
+      target.card.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    const clickable = targetCard.querySelector('a.job-card-list__title, .job-card-container, a[href*="/jobs/view/"]') || targetCard;
-    if (clickable && clickable.click) {
-      clickable.click();
+    if (target.link && target.link.click) {
+      target.link.click();
     }
     
     // Wait for pane to render
