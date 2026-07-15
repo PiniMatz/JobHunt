@@ -320,7 +320,7 @@ def scrape_secrettelaviv(target_locations: list) -> list:
                 if job_url:
                     try:
                         print("Fetching Secret Tel Aviv details...")
-                        r_detail = s.get(job_url, headers={"Referer": url}, impersonate="chrome", timeout=6)
+                        r_detail = s.get(job_url, headers={"Referer": url}, impersonate="chrome", timeout=15)
                         if r_detail.status_code == 200:
                             soup_detail = BeautifulSoup(r_detail.text, "html.parser")
                             
