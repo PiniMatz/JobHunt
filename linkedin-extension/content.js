@@ -18,72 +18,68 @@ async function logToServer(message, level = "INFO") {
   }
 }
 
+function dumpDOMTree(element, depth = 0, maxElements = 150) {
+  if (!element || depth > 8 || maxElements <= 0) return [];
+  
+  let infoList = [];
+  const textSnippet = element.children.length === 0 ? element.textContent.trim().substring(0, 50) : "";
+  
+  infoList.push({
+    depth,
+    tag: element.tagName,
+    class: element.className,
+    id: element.id || "",
+    role: element.getAttribute('role') || "",
+    text: textSnippet.replace(/\s+/g, ' ')
+  });
+  
+  const children = Array.from(element.children);
+  for (let child of children) {
+    infoList = infoList.concat(dumpDOMTree(child, depth + 1, maxElements - infoList.length));
+    if (infoList.length >= maxElements) break;
+  }
+  
+  return infoList;
+}
+
 async function startScan(sendResponse) {
   if (window.top !== window.self) {
     return;
   }
 
-  await logToServer("JobHunt Diagnostics Scan Started!");
+  await logToServer("JobHunt Deep Tree Diagnostics Started!");
   
   try {
-    const allElements = Array.from(document.querySelectorAll('*'));
-    const resultsEl = allElements.find(el => {
-      const text = el.textContent.trim();
-      return /^\d+\s+results$/i.test(text) && el.children.length === 0;
-    });
-
-    if (resultsEl) {
-      await logToServer(`Found results header: "${resultsEl.textContent.trim()}" (Tag: ${resultsEl.tagName})`);
+    // Locate the left panel container
+    const leftPanel = document.querySelector('._24f220ff, [class*="_24f220ff"]');
+    if (leftPanel) {
+      await logToServer(`Found left panel element (Tag: ${leftPanel.tagName}, Class: "${leftPanel.className}")`);
       
-      let headerElement = resultsEl;
-      while (headerElement && headerElement.tagName !== 'HEADER') {
-        headerElement = headerElement.parentElement;
-      }
-      
-      if (headerElement) {
-        await logToServer(`Found ancestor <header> (Class: "${headerElement.className}")`);
-        
-        // Log all siblings of this header element! One of them MUST be the jobs list container!
-        const siblings = Array.from(headerElement.parentElement.children);
-        await logToServer(`Header parent container tag: ${headerElement.parentElement.tagName}, class: "${headerElement.parentElement.className}"`);
-        await logToServer(`Header has ${siblings.length} siblings in its parent container.`);
-        
-        for (let i = 0; i < siblings.length; i++) {
-          const sib = siblings[i];
-          await logToServer(`Sibling ${i}: Tag=${sib.tagName}, Class="${sib.className}", ChildrenCount=${sib.children.length}`);
-          
-          // Dump the first level of child elements inside this sibling
-          const subChildren = Array.from(sib.children).map((c, idx) => ({
-            idx,
-            tag: c.tagName,
-            class: c.className,
-            textSnippet: c.textContent.trim().substring(0, 80).replace(/\s+/g, ' ')
-          }));
-          await logToServer(`Sibling ${i} Children Snippet: ${JSON.stringify(subChildren)}`);
-          
-          // If this sibling contains a list of children (e.g. 5+ cards), let's inspect the cards!
-          if (sib.children.length > 1) {
-            await logToServer(`--- Inspecting Sibling ${i} Children in Detail ---`);
-            Array.from(sib.children).slice(0, 5).forEach((child, idx) => {
-              // Log the child element's tags and child count
-              const childLinks = Array.from(child.querySelectorAll('a')).map(a => ({
-                text: a.textContent.trim(),
-                href: a.getAttribute('href'),
-                class: a.className
-              }));
-              logToServer(`Card ${idx}: Tag=${child.tagName}, Class="${child.className}", Links: ${JSON.stringify(childLinks)}`);
-            });
-          }
-        }
-      } else {
-        await logToServer("Could not find ancestor <header> element.", "WARNING");
-      }
+      const treeDump = dumpDOMTree(leftPanel);
+      await logToServer(`Left Panel DOM Tree (First 150 elements): ${JSON.stringify(treeDump)}`);
     } else {
-      await logToServer("Could not locate the 'results' header text leaf element.", "WARNING");
+      await logToServer("Could not find left panel element with class containing '_24f220ff'", "WARNING");
+      
+      // Fallback: search for results header parent
+      const resultsEl = Array.from(document.querySelectorAll('*')).find(el => {
+        const text = el.textContent.trim();
+        return /^\d+\s+results$/i.test(text) && el.children.length === 0;
+      });
+      if (resultsEl) {
+        let parent = resultsEl.parentElement;
+        for (let i = 0; i < 6 && parent; i++) {
+          if (parent.className.includes('_24f220ff')) {
+            await logToServer(`Found results parent match at level ${i}`);
+            const treeDump = dumpDOMTree(parent);
+            await logToServer(`Parent Match DOM Tree: ${JSON.stringify(treeDump)}`);
+            break;
+          }
+          parent = parent.parentElement;
+        }
+      }
     }
-
   } catch (err) {
-    await logToServer(`Diagnostics failed: ${err.message}`, "ERROR");
+    await logToServer(`Deep Diagnostics failed: ${err.message}`, "ERROR");
   }
 
   sendResponse({ status: "success", scanned: 0, imported: 0 });
