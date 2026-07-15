@@ -8,11 +8,10 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 async function startScan(sendResponse) {
   console.log("JobHunt Dynamic Scan Started!");
   
-  // Find scrollable list container
-  const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, [class*="results-list"]');
+  // Find scrollable list container with multiple fallbacks
+  const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, [class*="results-list"], [class*="scaffold-layout__list"]');
   if (!listContainer) {
-    sendResponse({ status: "error", message: "Scrollable job list container not found. Make sure you are on a LinkedIn jobs search page." });
-    return;
+    console.warn("Scrollable container not found by class. Using scrollIntoView fallback.");
   }
 
   const scannedJobIds = new Set();
@@ -49,7 +48,11 @@ async function startScan(sendResponse) {
     // If no unscanned card is found, scroll list container down to load more virtualized items
     if (!targetCard) {
       console.log("No new visible cards found, scrolling list down...");
-      listContainer.scrollTop += 350;
+      if (listContainer) {
+        listContainer.scrollTop += 350;
+      } else {
+        window.scrollBy({ top: 350, behavior: 'smooth' });
+      }
       await new Promise(r => setTimeout(r, 1500));
       consecutiveFailures++;
       continue;
