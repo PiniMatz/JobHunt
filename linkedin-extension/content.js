@@ -6,90 +6,78 @@ chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
 });
 
 async function startScan(sendResponse) {
-  console.log("JobHunt Scan Started!");
+  console.log("JobHunt Dynamic Scan Started!");
   
-  // Find scrollable list container with multiple fallbacks
-  const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, .jobs-search__results-list, [class*="results-list"]');
-  
-  // Scroll list container to bottom to trigger lazy loading of list cards
-  if (listContainer) {
-    listContainer.scrollTop = listContainer.scrollHeight;
-    await new Promise(r => setTimeout(r, 1500));
-    listContainer.scrollTop = 0;
-  } else {
-    // Fallback to scrolling window
-    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
-    await new Promise(r => setTimeout(r, 1500));
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }
-  
-  // Robust selectors for job cards
-  const selectors = [
-    '.scaffold-layout__list-container li[data-occludable-job-id]',
-    'li[data-occludable-job-id]',
-    '.jobs-search-results-list__list-item',
-    '.job-card-container',
-    '[data-job-id]'
-  ];
-  
-  let items = [];
-  for (const selector of selectors) {
-    items = Array.from(document.querySelectorAll(selector));
-    if (items.length > 0) {
-      console.log(`Matched selector: ${selector} with ${items.length} items.`);
-      break;
-    }
-  }
-  
-  // Fallback: search for direct jobs/view links
-  if (items.length === 0) {
-    const jobLinks = Array.from(document.querySelectorAll('a[href*="/jobs/view/"]'));
-    if (jobLinks.length > 0) {
-      items = jobLinks.map(link => {
-        let parent = link.parentElement;
-        while (parent && parent.tagName !== 'LI' && !parent.classList.contains('job-card-container')) {
-          parent = parent.parentElement;
-        }
-        return parent || link;
-      }).filter((v, i, self) => self.indexOf(v) === i);
-      console.log(`Fallback matched ${items.length} items from jobs/view links.`);
-    }
-  }
-  
-  console.log(`Found ${items.length} job cards to scan.`);
-  
-  if (items.length === 0) {
-    sendResponse({ status: "error", message: "No job cards found. Make sure you are on the LinkedIn jobs page and jobs are visible." });
+  // Find scrollable list container
+  const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, [class*="results-list"]');
+  if (!listContainer) {
+    sendResponse({ status: "error", message: "Scrollable job list container not found. Make sure you are on a LinkedIn jobs search page." });
     return;
   }
-  
-  let scannedCount = 0;
+
+  const scannedJobIds = new Set();
+  let consecutiveFailures = 0;
   let importedCount = 0;
-  
-  for (let i = 0; i < items.length; i++) {
-    const item = items[i];
+  const maxJobsToScan = 25; // Crawl depth limit per search page
+
+  while (scannedJobIds.size < maxJobsToScan && consecutiveFailures < 6) {
+    // Query currently rendered cards
+    const cards = Array.from(document.querySelectorAll('li[data-occludable-job-id], [data-job-id], .job-card-container'));
     
-    // Update progress to popup via runtime message
+    // Find the first unscanned card
+    let targetCard = null;
+    let targetJobId = null;
+    
+    for (const card of cards) {
+      let jobId = card.getAttribute('data-occludable-job-id') || card.getAttribute('data-job-id');
+      if (!jobId) {
+        // Fallback to finding href
+        const link = card.querySelector('a[href*="/jobs/view/"]');
+        if (link) {
+          const m = link.href.match(/\/view\/(\d+)/);
+          if (m) jobId = m[1];
+        }
+      }
+      
+      if (jobId && !scannedJobIds.has(jobId)) {
+        targetCard = card;
+        targetJobId = jobId;
+        break;
+      }
+    }
+    
+    // If no unscanned card is found, scroll list container down to load more virtualized items
+    if (!targetCard) {
+      console.log("No new visible cards found, scrolling list down...");
+      listContainer.scrollTop += 350;
+      await new Promise(r => setTimeout(r, 1500));
+      consecutiveFailures++;
+      continue;
+    }
+    
+    consecutiveFailures = 0; // Reset failure counter on target card found
+    
+    // Send progress update
     chrome.runtime.sendMessage({ 
       action: "scan-progress", 
-      current: i + 1, 
-      total: items.length,
-      title: "Loading..."
+      current: scannedJobIds.size + 1, 
+      total: maxJobsToScan,
+      title: "Loading job details..."
     });
     
-    // Scroll item into view and click it
-    if (item.scrollIntoView) {
-      item.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    // Scroll and Click card
+    if (targetCard.scrollIntoView) {
+      targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     }
-    const clickable = item.querySelector('a.job-card-list__title, .job-card-container, a[href*="/jobs/view/"]') || item;
+    const clickable = targetCard.querySelector('a.job-card-list__title, .job-card-container, a[href*="/jobs/view/"]') || targetCard;
     if (clickable && clickable.click) {
       clickable.click();
     }
     
-    // Wait for description pane to load
+    // Wait for pane to render
     await new Promise(r => setTimeout(r, 2000));
     
-    // Extract info with robust selectors
+    // Extract details
     const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, h1.t-24, .jobs-unified-top-card__job-title, h2.jobs-details-toggle__title');
     const title = titleEl ? titleEl.textContent.trim() : "";
     
@@ -102,23 +90,21 @@ async function startScan(sendResponse) {
     const descEl = document.querySelector('.jobs-description-content__text, .jobs-description__container, .jobs-box__html-content, .jobs-description');
     const description = descEl ? descEl.textContent.trim() : "";
     
-    // Extract URL
+    // Get actual URL from address bar since it changes dynamically on click
     const urlParams = new URLSearchParams(window.location.search);
-    const jobId = urlParams.get('currentJobId');
-    const jobUrl = jobId ? `https://www.linkedin.com/jobs/view/${jobId}/` : window.location.href;
+    const activeJobId = urlParams.get('currentJobId') || targetJobId;
+    const jobUrl = `https://www.linkedin.com/jobs/view/${activeJobId}/`;
+    
+    scannedJobIds.add(targetJobId);
     
     if (title && description) {
-      scannedCount++;
-      
-      // Update progress with title
       chrome.runtime.sendMessage({ 
         action: "scan-progress", 
-        current: i + 1, 
-        total: items.length,
+        current: scannedJobIds.size, 
+        total: maxJobsToScan,
         title: `${company} - ${title}`
       });
       
-      // POST to local FastAPI backend
       try {
         const res = await fetch("http://127.0.0.1:8000/api/jobs/import", {
           method: "POST",
@@ -137,5 +123,5 @@ async function startScan(sendResponse) {
     }
   }
   
-  sendResponse({ status: "success", scanned: scannedCount, imported: importedCount });
+  sendResponse({ status: "success", scanned: scannedJobIds.size, imported: importedCount });
 }
