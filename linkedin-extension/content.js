@@ -18,39 +18,63 @@ async function logToServer(message, level = "INFO") {
   }
 }
 
+// Recursive selector query that penetrates Shadow DOM and same-origin iframes
+function querySelectorAllRecursive(root, selector) {
+  let elements = Array.from(root.querySelectorAll(selector));
+  
+  // Inspect all elements for shadow roots
+  const allElements = root.querySelectorAll('*');
+  allElements.forEach(el => {
+    if (el.shadowRoot) {
+      elements = elements.concat(querySelectorAllRecursive(el.shadowRoot, selector));
+    }
+  });
+  
+  // Inspect all same-origin iframes
+  const iframes = root.querySelectorAll('iframe');
+  iframes.forEach(iframe => {
+    try {
+      if (iframe.contentDocument) {
+        elements = elements.concat(querySelectorAllRecursive(iframe.contentDocument, selector));
+      }
+    } catch (e) {
+      // Ignored due to cross-origin restriction
+    }
+  });
+  
+  return elements;
+}
+
 async function startScan(sendResponse) {
   if (window.top !== window.self) {
-    // We are in an iframe, do not run!
+    // Prevent running twice if loaded inside subframes
     return;
   }
 
   await logToServer("JobHunt Dynamic Scan Started!");
   await logToServer("Current Page URL: " + window.location.href);
   
-  // DEBUGGING: Log total page links to understand DOM structure
+  // Log iframe details to check page structure
   try {
-    const allLinks = Array.from(document.querySelectorAll('a'));
-    await logToServer(`Total a tags found on page: ${allLinks.length}`);
-    const sampleLinks = allLinks
-      .map(a => ({
-        text: a.textContent.trim().substring(0, 35),
-        href: a.getAttribute('href'),
-        classes: a.className
-      }))
-      .filter(info => info.href && (
-        info.href.includes('job') || 
-        info.href.includes('view') || 
-        info.href.includes('currentJobId') ||
-        info.classes.includes('job')
-      ));
-    await logToServer(`Sample job-related links: ${JSON.stringify(sampleLinks.slice(0, 25))}`);
+    const iframes = document.querySelectorAll('iframe');
+    await logToServer(`Total iframes on page: ${iframes.length}`);
+    iframes.forEach((iframe, idx) => {
+      try {
+        const src = iframe.src || "no-src";
+        const id = iframe.id || "no-id";
+        const classes = iframe.className || "no-class";
+        logToServer(`Iframe ${idx}: id="${id}", class="${classes}", src="${src}"`);
+      } catch (e) {
+        logToServer(`Iframe ${idx} details access restricted (cross-origin)`);
+      }
+    });
   } catch (err) {
-    await logToServer(`Failed debug links dump: ${err.message}`, "ERROR");
+    await logToServer(`Failed iframe inspection: ${err.message}`, "ERROR");
   }
 
-  // Find scrollable list container
-  const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, [class*="results-list"]');
-  await logToServer(`List container found in DOM: ${!!listContainer}`);
+  // Find scrollable list container (recursively)
+  const listContainer = querySelectorAllRecursive(document, '.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, [class*="results-list"]')[0];
+  await logToServer(`List container found recursively: ${!!listContainer}`);
 
   const scannedJobIds = new Set();
   let consecutiveFailures = 0;
@@ -59,14 +83,14 @@ async function startScan(sendResponse) {
 
   try {
     while (scannedJobIds.size < maxJobsToScan && consecutiveFailures < 6) {
-      // Query currently rendered cards dynamically via broad link selectors
+      // Query currently rendered cards recursively
       const cards = [];
-      const jobLinks = Array.from(document.querySelectorAll(
+      const jobLinks = querySelectorAllRecursive(document, 
         'a.job-card-list__title, ' +
         'a[href*="/jobs/view/"], ' +
         'a[href*="currentJobId="], ' +
         'a.job-card-container__link'
-      ));
+      );
       
       jobLinks.forEach(link => {
         const card = link.closest('li, .job-card-container, [data-job-id]') || link;
@@ -79,7 +103,7 @@ async function startScan(sendResponse) {
         }
       });
       
-      await logToServer(`Currently rendered cards: ${cards.length}. Scanned IDs count: ${scannedJobIds.size}`);
+      await logToServer(`Currently rendered cards recursively: ${cards.length}. Scanned count: ${scannedJobIds.size}`);
       
       // Find the first unscanned card
       let target = null;
@@ -122,13 +146,15 @@ async function startScan(sendResponse) {
         await new Promise(r => setTimeout(r, 500));
       }
       
-      // Click the card wrapper (closest li) to prevent full tab navigation
-      if (target.card && target.card.click) {
-        await logToServer("Clicking card element to load details panel.");
-        target.card.click();
-      } else if (target.link && target.link.click) {
-        await logToServer("Clicking link fallback.");
-        target.link.click();
+      // Click the job title link with a clean bubbling MouseEvent to let SPA router intercept it safely
+      if (target.link) {
+        await logToServer("Dispatching bubbling click event on job title link.");
+        const clickEvent = new MouseEvent('click', {
+          bubbles: true,
+          cancelable: true,
+          view: window
+        });
+        target.link.dispatchEvent(clickEvent);
       }
       
       // Wait for pane to render dynamically (polling loop up to 4s)
@@ -136,7 +162,7 @@ async function startScan(sendResponse) {
       let description = "";
       await logToServer("Waiting for details description pane to populate...");
       for (let attempts = 0; attempts < 8; attempts++) {
-        descEl = document.querySelector('#job-details, article, .jobs-description-content__text, .jobs-description__container, .jobs-box__html-content, .jobs-description, .jobs-description__content, .jobs-description-content');
+        descEl = querySelectorAllRecursive(document, '#job-details, article, .jobs-description-content__text, .jobs-description__container, .jobs-box__html-content, .jobs-description, .jobs-description__content, .jobs-description-content')[0];
         if (descEl) {
           description = descEl.textContent.trim();
           if (description.length > 100) {
@@ -147,14 +173,14 @@ async function startScan(sendResponse) {
       }
       
       // Extract details
-      const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, h1.t-24, .jobs-unified-top-card__job-title, h2.jobs-details-toggle__title');
+      const titleEl = querySelectorAllRecursive(document, '.job-details-jobs-unified-top-card__job-title, h1.t-24, .jobs-unified-top-card__job-title, h2.jobs-details-toggle__title')[0];
       let title = titleEl ? titleEl.textContent.trim() : "";
       if (!title && target.link) {
         title = target.link.textContent.trim();
       }
       
       let company = "LinkedIn Poster";
-      const companyEl = document.querySelector('.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name, .jobs-details-toggle__company-name');
+      const companyEl = querySelectorAllRecursive(document, '.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name, .jobs-details-toggle__company-name')[0];
       if (companyEl) {
         company = companyEl.textContent.trim();
       } else if (target.card) {
@@ -165,7 +191,7 @@ async function startScan(sendResponse) {
       }
       
       let location = "Israel";
-      const locationEl = document.querySelector('.job-details-jobs-unified-top-card__primary-description-container span, .jobs-unified-top-card__bullet, .jobs-unified-top-card__primary-description span, .jobs-details-toggle__job-location');
+      const locationEl = querySelectorAllRecursive(document, '.job-details-jobs-unified-top-card__primary-description-container span, .jobs-unified-top-card__bullet, .jobs-unified-top-card__primary-description span, .jobs-details-toggle__job-location')[0];
       if (locationEl) {
         location = locationEl.textContent.trim().split('·')[0].trim();
       } else if (target.card) {
