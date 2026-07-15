@@ -27,6 +27,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
     if (lowercaseUrl.includes('gotfriends.co.il')) return 'GotFriends';
     if (lowercaseUrl.includes('secrettelaviv.com')) return 'Secret Tel Aviv';
     if (lowercaseUrl.includes('goozali.com')) return 'Goozali';
+    if (lowercaseUrl.includes('linkedin.com')) return 'LinkedIn';
     return 'Web Listing';
   };
 
