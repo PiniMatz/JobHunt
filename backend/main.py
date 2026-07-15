@@ -47,6 +47,10 @@ class JobImport(BaseModel):
     description: str
     url: Optional[str] = None
 
+class LogMessage(BaseModel):
+    level: str
+    message: str
+
 @app.get("/api/jobs")
 def get_jobs():
     try:
@@ -98,6 +102,11 @@ def import_jobs(jobs: List[JobImport]):
         return {"status": "success", "jobs_imported": len(jobs), "new_jobs": new_jobs_count}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/api/logs")
+def receive_logs(log: LogMessage):
+    print(f"[EXTENSION-{log.level}] {log.message}")
+    return {"status": "ok"}
 
 @app.post("/api/jobs/{job_id}/match")
 def match_job(job_id: int):
