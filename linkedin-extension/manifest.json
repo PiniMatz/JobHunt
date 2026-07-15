@@ -1,0 +1,23 @@
+{
+  "manifest_version": 3,
+  "name": "JobHunt LinkedIn Sync",
+  "version": "1.0",
+  "description": "Sync job listings from LinkedIn to your local JobHunt dashboard.",
+  "permissions": [
+    "activeTab",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:8000/*",
+    "https://*.linkedin.com/*"
+  ],
+  "action": {
+    "default_popup": "popup.html"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://*.linkedin.com/jobs/*"],
+      "js": ["content.js"]
+    }
+  ]
+}
