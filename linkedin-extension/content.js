@@ -14,14 +14,40 @@ async function logToServer(message, level = "INFO") {
       body: JSON.stringify({ level, message })
     });
   } catch (e) {
-    // Ignore to prevent looping on offline backend
+    // Ignore
   }
 }
 
 async function startScan(sendResponse) {
+  if (window.top !== window.self) {
+    // We are in an iframe, do not run!
+    return;
+  }
+
   await logToServer("JobHunt Dynamic Scan Started!");
   await logToServer("Current Page URL: " + window.location.href);
   
+  // DEBUGGING: Log total page links to understand DOM structure
+  try {
+    const allLinks = Array.from(document.querySelectorAll('a'));
+    await logToServer(`Total a tags found on page: ${allLinks.length}`);
+    const sampleLinks = allLinks
+      .map(a => ({
+        text: a.textContent.trim().substring(0, 35),
+        href: a.getAttribute('href'),
+        classes: a.className
+      }))
+      .filter(info => info.href && (
+        info.href.includes('job') || 
+        info.href.includes('view') || 
+        info.href.includes('currentJobId') ||
+        info.classes.includes('job')
+      ));
+    await logToServer(`Sample job-related links: ${JSON.stringify(sampleLinks.slice(0, 25))}`);
+  } catch (err) {
+    await logToServer(`Failed debug links dump: ${err.message}`, "ERROR");
+  }
+
   // Find scrollable list container
   const listContainer = document.querySelector('.jobs-search-results-list, .scaffold-layout__list, ul.scaffold-layout__list-container, [class*="results-list"]');
   await logToServer(`List container found in DOM: ${!!listContainer}`);
