@@ -18,29 +18,36 @@ async function logToServer(message, level = "INFO") {
   }
 }
 
-// Recursive selector query that penetrates Shadow DOM and same-origin iframes
+// Deep recursive query selector that penetrates shadow roots and iframes
 function querySelectorAllRecursive(root, selector) {
-  let elements = Array.from(root.querySelectorAll(selector));
+  let elements = [];
+  try {
+    elements = Array.from(root.querySelectorAll(selector));
+  } catch (e) {
+    // Ignore selector errors on document fragments
+  }
   
-  // Inspect all elements for shadow roots
-  const allElements = root.querySelectorAll('*');
-  allElements.forEach(el => {
-    if (el.shadowRoot) {
-      elements = elements.concat(querySelectorAllRecursive(el.shadowRoot, selector));
-    }
-  });
-  
-  // Inspect all same-origin iframes
-  const iframes = root.querySelectorAll('iframe');
-  iframes.forEach(iframe => {
-    try {
-      if (iframe.contentDocument) {
-        elements = elements.concat(querySelectorAllRecursive(iframe.contentDocument, selector));
+  try {
+    const allNodes = root.querySelectorAll('*');
+    allNodes.forEach(node => {
+      // Recurse into Shadow DOM
+      if (node.shadowRoot) {
+        elements = elements.concat(querySelectorAllRecursive(node.shadowRoot, selector));
       }
-    } catch (e) {
-      // Ignored due to cross-origin restriction
-    }
-  });
+      // Recurse into Iframe
+      if (node.tagName === 'IFRAME') {
+        try {
+          if (node.contentDocument) {
+            elements = elements.concat(querySelectorAllRecursive(node.contentDocument, selector));
+          }
+        } catch (e) {
+          // Cross-origin container, ignore
+        }
+      }
+    });
+  } catch (e) {
+    // Ignore traversal errors
+  }
   
   return elements;
 }
@@ -54,22 +61,16 @@ async function startScan(sendResponse) {
   await logToServer("JobHunt Dynamic Scan Started!");
   await logToServer("Current Page URL: " + window.location.href);
   
-  // Log iframe details to check page structure
+  // Log shadow DOM elements count
   try {
-    const iframes = document.querySelectorAll('iframe');
-    await logToServer(`Total iframes on page: ${iframes.length}`);
-    iframes.forEach((iframe, idx) => {
-      try {
-        const src = iframe.src || "no-src";
-        const id = iframe.id || "no-id";
-        const classes = iframe.className || "no-class";
-        logToServer(`Iframe ${idx}: id="${id}", class="${classes}", src="${src}"`);
-      } catch (e) {
-        logToServer(`Iframe ${idx} details access restricted (cross-origin)`);
-      }
+    const allNodes = document.querySelectorAll('*');
+    let shadowCount = 0;
+    allNodes.forEach(el => {
+      if (el.shadowRoot) shadowCount++;
     });
+    await logToServer(`Light DOM nodes count: ${allNodes.length}, shadowRoots count: ${shadowCount}`);
   } catch (err) {
-    await logToServer(`Failed iframe inspection: ${err.message}`, "ERROR");
+    await logToServer(`Shadow root inspection failed: ${err.message}`, "ERROR");
   }
 
   // Find scrollable list container (recursively)
@@ -104,6 +105,16 @@ async function startScan(sendResponse) {
       });
       
       await logToServer(`Currently rendered cards recursively: ${cards.length}. Scanned count: ${scannedJobIds.size}`);
+      
+      // Let's log details about the found cards to understand why only 1 is matched
+      if (cards.length > 0) {
+        const cardInfo = cards.map(c => ({
+          jobId: c.jobId,
+          text: c.link ? c.link.textContent.trim().substring(0, 30) : "no-link",
+          href: c.link ? c.link.getAttribute('href') : "no-href"
+        }));
+        await logToServer(`Rendered Cards Details: ${JSON.stringify(cardInfo)}`);
+      }
       
       // Find the first unscanned card
       let target = null;
