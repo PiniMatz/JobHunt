@@ -17,7 +17,7 @@ def pre_screen_job(title: str, description: str, settings: dict) -> tuple[bool, 
     # 1. Check must-have keywords
     # At least one must-have keyword must appear in the title or the description.
     # To reduce false positives, we check for word boundaries or exact substrings.
-    has_must_have = False
+    has_must_have = not must_haves
     for kw in must_haves:
         kw_clean = kw.strip().lower()
         if not kw_clean:

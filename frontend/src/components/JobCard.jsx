@@ -36,6 +36,17 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
     return /[\u0590-\u05FF]/.test(text);
   };
 
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '';
+    try {
+      // Replace space with T to make it standard ISO for JS parser
+      const date = new Date(dateStr.replace(' ', 'T'));
+      return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric', year: 'numeric' });
+    } catch (e) {
+      return dateStr;
+    }
+  };
+
   const getStatusIcon = (status) => {
     switch (status) {
       case 'starred': return '⭐';
@@ -121,6 +132,9 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
               {job.company}
             </span>
             <span style={{ fontSize: '0.9rem', color: 'var(--text-muted)' }}>📍 {job.location}</span>
+            <span style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginLeft: '0.75rem' }}>
+              📅 {formatDate(job.date_found)}
+            </span>
           </div>
           <h3 style={{ 
             fontSize: '1.3rem', 
