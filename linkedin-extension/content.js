@@ -33,9 +33,14 @@ async function startScan(sendResponse) {
 
   try {
     while (scannedJobIds.size < maxJobsToScan && consecutiveFailures < 6) {
-      // Query currently rendered cards dynamically via view links
+      // Query currently rendered cards dynamically via broad link selectors
       const cards = [];
-      const jobLinks = Array.from(document.querySelectorAll('a[href*="/jobs/view/"]'));
+      const jobLinks = Array.from(document.querySelectorAll(
+        'a.job-card-list__title, ' +
+        'a[href*="/jobs/view/"], ' +
+        'a[href*="currentJobId="], ' +
+        'a.job-card-container__link'
+      ));
       
       jobLinks.forEach(link => {
         const card = link.closest('li, .job-card-container, [data-job-id]') || link;
@@ -100,21 +105,49 @@ async function startScan(sendResponse) {
         target.link.click();
       }
       
-      // Wait for pane to render
-      await new Promise(r => setTimeout(r, 2000));
+      // Wait for pane to render dynamically (polling loop up to 4s)
+      let descEl = null;
+      let description = "";
+      await logToServer("Waiting for details description pane to populate...");
+      for (let attempts = 0; attempts < 8; attempts++) {
+        descEl = document.querySelector('#job-details, article, .jobs-description-content__text, .jobs-description__container, .jobs-box__html-content, .jobs-description, .jobs-description__content, .jobs-description-content');
+        if (descEl) {
+          description = descEl.textContent.trim();
+          if (description.length > 100) {
+            break;
+          }
+        }
+        await new Promise(r => setTimeout(r, 500));
+      }
       
       // Extract details
       const titleEl = document.querySelector('.job-details-jobs-unified-top-card__job-title, h1.t-24, .jobs-unified-top-card__job-title, h2.jobs-details-toggle__title');
-      const title = titleEl ? titleEl.textContent.trim() : "";
+      let title = titleEl ? titleEl.textContent.trim() : "";
+      if (!title && target.link) {
+        title = target.link.textContent.trim();
+      }
       
+      let company = "LinkedIn Poster";
       const companyEl = document.querySelector('.job-details-jobs-unified-top-card__company-name, .jobs-unified-top-card__company-name a, .jobs-unified-top-card__company-name, .jobs-details-toggle__company-name');
-      const company = companyEl ? companyEl.textContent.trim() : "LinkedIn Poster";
+      if (companyEl) {
+        company = companyEl.textContent.trim();
+      } else if (target.card) {
+        const cardCompanyEl = target.card.querySelector('.job-card-container__company-name, .job-card-list__company-name, [class*="company-name"]');
+        if (cardCompanyEl) {
+          company = cardCompanyEl.textContent.trim();
+        }
+      }
       
+      let location = "Israel";
       const locationEl = document.querySelector('.job-details-jobs-unified-top-card__primary-description-container span, .jobs-unified-top-card__bullet, .jobs-unified-top-card__primary-description span, .jobs-details-toggle__job-location');
-      const location = locationEl ? locationEl.textContent.trim().split('·')[0].trim() : "Israel";
-      
-      const descEl = document.querySelector('.jobs-description-content__text, .jobs-description__container, .jobs-box__html-content, .jobs-description');
-      const description = descEl ? descEl.textContent.trim() : "";
+      if (locationEl) {
+        location = locationEl.textContent.trim().split('·')[0].trim();
+      } else if (target.card) {
+        const cardLocEl = target.card.querySelector('.job-card-container__metadata-item, .job-card-list__metadata-item, [class*="metadata-item"], [class*="location"]');
+        if (cardLocEl) {
+          location = cardLocEl.textContent.trim().split('·')[0].trim();
+        }
+      }
       
       // Get actual URL from address bar since it changes dynamically on click
       const urlParams = new URLSearchParams(window.location.search);
