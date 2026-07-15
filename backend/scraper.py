@@ -292,7 +292,9 @@ def scrape_secrettelaviv(target_locations: list) -> list:
     }
     print(f"Scraping Secret Tel Aviv listings: {url}")
     try:
-        r = requests.get(url, headers=headers, timeout=8)
+        from curl_cffi import requests as c_requests
+        s = c_requests.Session()
+        r = s.get(url, headers=headers, impersonate="chrome", timeout=8)
         if r.status_code == 200:
             soup = BeautifulSoup(r.text, "html.parser")
             job_items = soup.find_all(class_=re.compile(r"post-\d+"))
@@ -309,15 +311,39 @@ def scrape_secrettelaviv(target_locations: list) -> list:
                 link_el = title_el.find("a")
                 job_url = link_el["href"] if link_el else ""
                 
-                # Description
-                desc_el = item.find(class_="post-content")
-                description = desc_el.text.strip() if desc_el else ""
-                
-                # Location (Since it is Secret Tel Aviv, default to Tel Aviv)
-                location = "Tel Aviv"
-                
-                # Company (default to Secret Tel Aviv Client)
+                # Default values
                 company = "Secret Tel Aviv Client"
+                location = "Tel Aviv"
+                description = ""
+                
+                # Fetch full details using curl_cffi session to bypass WAF
+                if job_url:
+                    try:
+                        print("Fetching Secret Tel Aviv details...")
+                        r_detail = s.get(job_url, headers={"Referer": url}, impersonate="chrome", timeout=6)
+                        if r_detail.status_code == 200:
+                            soup_detail = BeautifulSoup(r_detail.text, "html.parser")
+                            
+                            # Parse Company
+                            company_el = soup_detail.find(class_="wpjb-top-header-title")
+                            if company_el and company_el.contents:
+                                company = company_el.contents[0].strip()
+                                
+                            # Parse Description
+                            desc_el = soup_detail.find(class_="post-content")
+                            if desc_el:
+                                raw_text = desc_el.text.strip()
+                                if "Description" in raw_text:
+                                    description = raw_text.split("Description", 1)[1].strip()
+                                else:
+                                    description = raw_text
+                    except Exception as ed:
+                        print(f"Error fetching Secret Tel Aviv job page: {ed}")
+                        
+                # Fallback to search list snippet description if fetching detail page failed
+                if not description:
+                    list_desc_el = item.find(class_="post-content")
+                    description = list_desc_el.text.strip() if list_desc_el else ""
                 
                 # Filter by location (translation-aware check)
                 if title and match_location(location, target_locations):
