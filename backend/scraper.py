@@ -5,7 +5,7 @@ import random
 from datetime import datetime, timedelta
 import requests
 from bs4 import BeautifulSoup
-from database import get_settings
+from firestore_db import get_settings
 
 # Mock jobs data removed to enforce 100% real crawling only.
 

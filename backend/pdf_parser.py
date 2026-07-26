@@ -1,7 +1,7 @@
 import io
 from pypdf import PdfReader
 import google.generativeai as genai
-from database import get_settings
+from firestore_db import get_settings
 
 def extract_text_from_pdf(pdf_bytes: bytes) -> str:
     """Extract raw text from a PDF file."""

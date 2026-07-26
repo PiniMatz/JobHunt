@@ -2,7 +2,7 @@ import os
 import json
 import google.generativeai as genai
 from pydantic import BaseModel, Field
-from database import get_settings
+from firestore_db import get_settings
 
 class CVSuggestionSchema(BaseModel):
     general_feedback: str = Field(description="Overall advice on how well the CV aligns with the job description.")

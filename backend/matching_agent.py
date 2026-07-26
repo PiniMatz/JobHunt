@@ -2,7 +2,7 @@ import os
 import json
 import google.generativeai as genai
 from pydantic import BaseModel, Field
-from database import get_settings
+from firestore_db import get_settings
 
 class JobMatchSchema(BaseModel):
     overall_score: int = Field(description="Overall match score from 0 to 100.")
