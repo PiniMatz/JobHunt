@@ -109,7 +109,7 @@ def receive_logs(log: LogMessage):
     return {"status": "ok"}
 
 @app.post("/api/jobs/{job_id}/match")
-def match_job(job_id: int):
+def match_job(job_id: str):
     try:
         settings = database.get_settings()
         if not settings:
@@ -123,7 +123,7 @@ def match_job(job_id: int):
             
         # Get job details from DB
         jobs = database.get_jobs_with_matches()
-        target_job = next((j for j in jobs if j["id"] == job_id), None)
+        target_job = next((j for j in jobs if str(j["id"]) == str(job_id)), None)
         if not target_job:
             raise HTTPException(status_code=404, detail="Job listing not found.")
             
@@ -166,13 +166,13 @@ def match_job(job_id: int):
             
         # Return the updated job with match info
         updated_jobs = database.get_jobs_with_matches()
-        updated_job = next((j for j in updated_jobs if j["id"] == job_id), None)
+        updated_job = next((j for j in updated_jobs if str(j["id"]) == str(job_id)), None)
         return updated_job
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/jobs/{job_id}/status")
-def update_job_status(job_id: int, payload: StatusUpdate):
+def update_job_status(job_id: str, payload: StatusUpdate):
     try:
         if payload.status not in ["active", "starred", "dismissed", "applied"]:
             raise HTTPException(status_code=400, detail="Invalid status value.")
@@ -182,7 +182,7 @@ def update_job_status(job_id: int, payload: StatusUpdate):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.delete("/api/jobs/{job_id}")
-def delete_job(job_id: int):
+def delete_job(job_id: str):
     try:
         database.delete_job(job_id)
         return {"status": "success", "job_id": job_id}
@@ -240,7 +240,7 @@ async def upload_cv(file: UploadFile = File(...)):
         raise HTTPException(status_code=500, detail=str(e))
 
 @app.post("/api/jobs/{job_id}/cv-suggestions")
-def get_cv_suggestions(job_id: int):
+def get_cv_suggestions(job_id: str):
     try:
         settings = database.get_settings()
         if not settings or not settings.get("cv_markdown"):
@@ -248,7 +248,7 @@ def get_cv_suggestions(job_id: int):
             
         # Get job details
         jobs = database.get_jobs_with_matches()
-        target_job = next((j for j in jobs if j["id"] == job_id), None)
+        target_job = next((j for j in jobs if str(j["id"]) == str(job_id)), None)
         
         if not target_job:
             raise HTTPException(status_code=404, detail="Job listing not found.")
