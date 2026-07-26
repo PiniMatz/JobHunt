@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { API_BASE_URL } from '../config';
 
 const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
   const [expanded, setExpanded] = useState(false);
@@ -62,7 +63,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
     setRunningMatch(true);
     setMatchError('');
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/match`, {
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${job.id}/match`, {
         method: 'POST',
       });
       if (!response.ok) {
@@ -85,7 +86,7 @@ const JobCard = ({ job, onStatusChange, onJobUpdate }) => {
     setLoadingSuggestions(true);
     setErrorSuggestions('');
     try {
-      const response = await fetch(`http://127.0.0.1:8000/api/jobs/${job.id}/cv-suggestions`, {
+      const response = await fetch(`${API_BASE_URL}/api/jobs/${job.id}/cv-suggestions`, {
         method: 'POST',
       });
       if (!response.ok) {

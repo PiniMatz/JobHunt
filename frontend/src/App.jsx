@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import JobCard from './components/JobCard';
+import { API_BASE_URL } from './config';
 
 function App() {
   const [activeTab, setActiveTab] = useState('dashboard'); // 'dashboard', 'cv', 'settings'
@@ -39,7 +40,7 @@ function App() {
 
   const fetchSettings = async () => {
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/settings');
+      const res = await fetch(`${API_BASE_URL}/api/settings`);
       if (res.ok) {
         const data = await res.json();
         setSettings(data);
@@ -57,7 +58,7 @@ function App() {
   const fetchJobs = async () => {
     setLoadingJobs(true);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/jobs');
+      const res = await fetch(`${API_BASE_URL}/api/jobs`);
       if (res.ok) {
         const data = await res.json();
         setJobs(data);
@@ -73,7 +74,7 @@ function App() {
     setScanning(true);
     setScanStatus('Scanning job listings in target areas...');
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/jobs/scan', { method: 'POST' });
+      const res = await fetch(`${API_BASE_URL}/api/jobs/scan`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setScanStatus(`Scan complete! Found ${data.jobs_scanned} listings.`);
@@ -92,7 +93,7 @@ function App() {
 
   const handleStatusChange = async (jobId, newStatus) => {
     try {
-      const res = await fetch(`http://127.0.0.1:8000/api/jobs/${jobId}/status`, {
+      const res = await fetch(`${API_BASE_URL}/api/jobs/${jobId}/status`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: newStatus })
@@ -121,7 +122,7 @@ function App() {
     const mustHaveArray = mustHaveInput.split(',').map(s => s.trim()).filter(Boolean);
     const exclusionArray = exclusionInput.split(',').map(s => s.trim()).filter(Boolean);
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/settings', {
+      const res = await fetch(`${API_BASE_URL}/api/settings`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -155,7 +156,7 @@ function App() {
     formData.append('file', file);
 
     try {
-      const res = await fetch('http://127.0.0.1:8000/api/cv/upload', {
+      const res = await fetch(`${API_BASE_URL}/api/cv/upload`, {
         method: 'POST',
         body: formData
       });
@@ -510,7 +511,7 @@ function App() {
                   onClick={async () => {
                     const newText = prompt("Edit CV Markdown:", settings.cv_markdown);
                     if (newText !== null) {
-                      const res = await fetch('http://127.0.0.1:8000/api/settings', {
+                      const res = await fetch(`${API_BASE_URL}/api/settings`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ cv_markdown: newText })
