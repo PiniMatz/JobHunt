@@ -5,7 +5,7 @@ from pydantic import BaseModel
 from typing import List, Optional
 
 # Import local modules
-import database
+import firestore_db as database
 from pdf_parser import extract_text_from_pdf, convert_pdf_text_to_markdown
 from matching_agent import analyze_job_match
 from scraper import search_live_jobs
